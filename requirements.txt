@@ -1,0 +1,10 @@
+# Main notebook environment (plan: "ews_main"; locally we use conda env "pyprime")
+numpy>=1.26
+pandas>=2.0
+scipy>=1.11
+scikit-learn>=1.3
+matplotlib>=3.7
+wfdb>=4.1          # real MIMIC records (Section 1, real-data mode)
+pyarrow>=14.0      # parquet caching
+lifelines>=0.28    # Section 7 survival experiments (not installed locally yet)
+torch>=2.1         # Sections 6-7 (embedding aggregation, BLSTM)

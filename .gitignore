@@ -1,0 +1,15 @@
+# Research data, cached intermediates, weights, third-party repos (plan rule 1)
+data/
+cache/
+weights/
+third_party/
+
+# Python / Jupyter
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# Local tooling (machine-specific, never shared)
+.idea/
+.claude/
+.vscode/
