@@ -1,0 +1,76 @@
+[chain] run 1 done, starting CI fix-up
+plain        1h: AUROC 0.632 [0.516, 0.748] | AUPRC 0.284 [0.193, 0.368]
+plain        6h: AUROC 0.402 [0.344, 0.456] | AUPRC 0.549 [0.489, 0.624]
+plain       24h: AUROC 0.809 [0.733, 0.963] | AUPRC 0.997 [0.995, 1.000]
+adv          1h: AUROC 0.697 [0.599, 0.792] | AUPRC 0.282 [0.204, 0.350]
+adv          6h: AUROC 0.436 [0.368, 0.501] | AUPRC 0.561 [0.499, 0.652]
+adv         24h: AUROC 0.803 [0.749, 0.893] | AUPRC 0.998 [0.996, 0.999]
+adv_pcgrad   1h: AUROC 0.663 [0.557, 0.781] | AUPRC 0.239 [0.167, 0.335]
+adv_pcgrad   6h: AUROC 0.459 [0.382, 0.537] | AUPRC 0.586 [0.501, 0.699]
+adv_pcgrad  24h: AUROC 0.648 [0.540, 0.822] | AUPRC 0.994 [0.989, 0.999]
+no_emb       1h: AUROC 0.767 [0.705, 0.837] | AUPRC 0.244 [0.187, 0.360]
+no_emb       6h: AUROC 0.508 [0.461, 0.555] | AUPRC 0.616 [0.554, 0.699]
+no_emb      24h: AUROC 0.755 [0.674, 0.861] | AUPRC 0.997 [0.995, 0.999]
+no_eng       1h: AUROC 0.707 [0.602, 0.812] | AUPRC 0.257 [0.199, 0.324]
+no_eng       6h: AUROC 0.422 [0.377, 0.462] | AUPRC 0.554 [0.488, 0.635]
+no_eng      24h: AUROC 0.820 [0.751, 0.949] | AUPRC 0.995 [0.991, 1.000]
+
+rewrote -> /home/abrar/Desktop/AI RPM Papers/Cardiac Arrest Detection/outputs/sddb_v2_metrics.json
+[chain] CI fix-up done, starting fusion comparison
+building SDDB manifest...
+skipped 5 windows with NaN gaps (digitized-tape corruption)
+windows: 1829 ({'pre': 1139, 'far': 690})
+label sums: {1: 178, 6: 1126, 24: 1812}
+(24 h labels are all-positive on SDDB: no record extends far enough before onset to supply 24 h negatives)
+modality masks: {'vitals': np.float32(1.0), 'eng': np.float32(1.0), 'ecg': np.float32(1.0), 'ppg': np.float32(0.0)}
+
+(a) zero-shot (synthetic-trained model):
+   1h: AUROC 0.338 | AUPRC 0.146
+   6h: AUROC 0.447 | AUPRC 0.578
+  24h: AUROC 0.262 | AUPRC 0.982 (degenerate: no negatives on SDDB)
+
+(b) 5-fold grouped-by-record CV: ['gate', 'attn', 'weight']
+
+--- variant gate (15 epochs) ---
+  fold 0: test records [3, 8, 12, 13] (n=426) done | val AUC6h last epoch 0.3868026615706951
+  fold 1: test records [10, 14, 15, 16] (n=167) done | val AUC6h last epoch 0.006024096385542169
+  fold 2: test records [0, 1, 6, 7] (n=386) done | val AUC6h last epoch 0.5033631367402182
+  fold 3: test records [4, 5, 18, 19] (n=381) done | val AUC6h last epoch 0.4407032866007814
+  fold 4: test records [2, 9, 11, 17] (n=469) done | val AUC6h last epoch 0.4525013743815283
+   1h: AUROC 0.655 [0.546, 0.778] | AUPRC 0.243 [0.189, 0.305]
+   6h: AUROC 0.386 [0.337, 0.435] | AUPRC 0.542 [0.486, 0.616]
+  24h: AUROC 0.831 [0.764, 0.956] | AUPRC 0.997 [0.995, 1.000]
+  time-averaged AUC across lead-time bins: 0.4583704269536075
+  identity probe acc (train windows): 0.402 (chance 1/20 = 0.050)
+
+--- variant attn (15 epochs) ---
+  fold 0: test records [3, 8, 12, 13] (n=426) done | val AUC6h last epoch 0.45358368061151655
+  fold 1: test records [10, 14, 15, 16] (n=167) done | val AUC6h last epoch 0.0
+  fold 2: test records [0, 1, 6, 7] (n=386) done | val AUC6h last epoch 0.5985836546085911
+  fold 3: test records [4, 5, 18, 19] (n=381) done | val AUC6h last epoch 0.485779131234199
+  fold 4: test records [2, 9, 11, 17] (n=469) done | val AUC6h last epoch 0.4938977460142936
+   1h: AUROC 0.638 [0.519, 0.754] | AUPRC 0.301 [0.209, 0.391]
+   6h: AUROC 0.473 [0.402, 0.538] | AUPRC 0.594 [0.537, 0.675]
+  24h: AUROC 0.822 [0.766, 0.922] | AUPRC 0.997 [0.995, 0.999]
+  time-averaged AUC across lead-time bins: 0.46264831121020883
+  identity probe acc (train windows): 0.143 (chance 1/20 = 0.050)
+
+--- variant weight (15 epochs) ---
+  fold 0: test records [3, 8, 12, 13] (n=426) done | val AUC6h last epoch 0.38086247783943084
+  fold 1: test records [10, 14, 15, 16] (n=167) done | val AUC6h last epoch 0.0
+  fold 2: test records [0, 1, 6, 7] (n=386) done | val AUC6h last epoch 0.48329368659940397
+  fold 3: test records [4, 5, 18, 19] (n=381) done | val AUC6h last epoch 0.49382325902091473
+  fold 4: test records [2, 9, 11, 17] (n=469) done | val AUC6h last epoch 0.45361920469122224
+   1h: AUROC 0.660 [0.546, 0.776] | AUPRC 0.251 [0.189, 0.318]
+   6h: AUROC 0.394 [0.347, 0.443] | AUPRC 0.544 [0.491, 0.617]
+  24h: AUROC 0.827 [0.761, 0.948] | AUPRC 0.998 [0.996, 1.000]
+  time-averaged AUC across lead-time bins: 0.46298700966751855
+  identity probe acc (train windows): 0.354 (chance 1/20 = 0.050)
+
+attention salience (last-history-position mean weight per bin):
+  gate        (0,1] 0.000 | (1,6] 0.000 | (6,24] 0.000
+  attn        (0,1] 0.000 | (1,6] 0.000 | (6,24] 0.000
+  weight      (0,1] 0.000 | (1,6] 0.000 | (6,24] 0.000
+
+saved -> outputs/sddb_v2_fusion_metrics.json
+(honest caveat: Holter 1980s data, 20 patients, no PPG/ABP -> a real-data smoke test, not a clinical validation)

@@ -1,0 +1,30 @@
+loading synthetic replay set...
+replay windows 604, patients [37 52]
+training (or loading cached) concat/gate/weight...
+  loaded: ['concat', 'gate', 'weight']
+  clean concat: {1: np.float64(1.0), 6: np.float64(0.9288324979114453), 24: np.float64(0.9597947433192687)}
+  clean gate: {1: np.float64(1.0), 6: np.float64(0.9450187969924813), 24: np.float64(0.9129417194092827)}
+  clean weight: {1: np.float64(1.0), 6: np.float64(0.9430868838763575), 24: np.float64(0.9193037974683543)}
+  missing_ppg concat: {1: np.float64(1.0), 6: np.float64(0.9366906850459482), 24: np.float64(0.9694642229254571)}
+  missing_ppg gate: {1: np.float64(0.9999999999999999), 6: np.float64(0.9515455304928989), 24: np.float64(0.9156887306610408)}
+  missing_ppg weight: {1: np.float64(1.0), 6: np.float64(0.9471073517126148), 24: np.float64(0.9239187763713079)}
+  delay 5 min done
+  delay 10 min done
+  delay 15 min done
+  sensor_failure concat: {1: np.float64(1.0), 6: np.float64(0.9288324979114453), 24: np.float64(0.9674534106891701)}
+  sensor_failure gate: {1: np.float64(1.0), 6: np.float64(0.9450187969924813), 24: np.float64(0.9186225386779183)}
+  sensor_failure weight: {1: np.float64(1.0), 6: np.float64(0.9430868838763575), 24: np.float64(0.9238308720112515)}
+  vitals noise 0.5x done
+  vitals noise 1.0x done
+  vitals noise 2.0x done
+  ecg_noise_20dB done: concat: 0.929, gate: 0.945, weight: 0.943
+  ecg_noise_10dB done: concat: 0.931, gate: 0.948, weight: 0.944
+  ecg_noise_5dB done: concat: 0.934, gate: 0.949, weight: 0.945
+  ecg_wander done: concat: 0.929, gate: 0.945, weight: 0.944
+  ecg_mains done: concat: 0.929, gate: 0.944, weight: 0.943
+  ecg_flatline done: concat: 0.928, gate: 0.940, weight: 0.952
+  ecg_saturation done: concat: 0.929, gate: 0.946, weight: 0.943
+  ppg_noise_5dB done
+
+saved -> /home/abrar/Desktop/AI RPM Papers/Cardiac Arrest Detection/outputs/robustness_metrics.json
+(honest caveat: 2 replay patients, point estimates only)

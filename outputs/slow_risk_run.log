@@ -1,0 +1,11 @@
+building 3 h blocks...
+blocks: 59 across 16 records
+
+1 h horizon: 5 positives, 52 negatives, 2 ambiguous blocks dropped
+  slow-marker LR: AUROC 0.426 [0.193, 0.667] | AUPRC 0.101 [0.048, 0.181]
+
+6 h horizon: 28 positives, 29 negatives, 2 ambiguous blocks dropped
+  slow-marker LR: AUROC 0.313 [0.190, 0.400] | AUPRC 0.414 [0.349, 0.528]
+
+saved -> /home/abrar/Desktop/AI RPM Papers/Cardiac Arrest Detection/outputs/slow_risk_metrics.json
+(honest caveat: 20 Holter patients, single lead, marker proxies; the slow-risk layer is separate from the short-horizon FEAN model)

@@ -1,0 +1,36 @@
+{
+ "1h": {
+  "auroc": [
+   0.42626176820923534,
+   0.1933111954459203,
+   0.6666666666666666
+  ],
+  "auprc": [
+   0.10082390178866013,
+   0.04805491990846682,
+   0.18073222140762457
+  ],
+  "n_pos": 5,
+  "n_neg": 52,
+  "n_ambiguous_dropped": 2
+ },
+ "6h": {
+  "auroc": [
+   0.3125309979027189,
+   0.1904017857142857,
+   0.39999999999999997
+  ],
+  "auprc": [
+   0.41408188791831174,
+   0.348687322650698,
+   0.5276838850698421
+  ],
+  "n_pos": 28,
+  "n_neg": 29,
+  "n_ambiguous_dropped": 2
+ },
+ "n_blocks": 59,
+ "n_records": 16,
+ "seed": 7,
+ "disclaimer": "slow-marker layer on Holter data, 20 patients; research prototype, not clinical validation"
+}

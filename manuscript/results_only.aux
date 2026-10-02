@@ -1,0 +1,40 @@
+\relax 
+\providecommand\hyper@newdestlabel[2]{}
+\providecommand\HyperFirstAtBeginDocument{\AtBeginDocument}
+\HyperFirstAtBeginDocument{\ifx\hyper@anchor\@undefined
+\global\let\oldcontentsline\contentsline
+\gdef\contentsline#1#2#3#4{\oldcontentsline{#1}{#2}{#3}}
+\global\let\oldnewlabel\newlabel
+\gdef\newlabel#1#2{\newlabelxx{#1}#2}
+\gdef\newlabelxx#1#2#3#4#5#6{\oldnewlabel{#1}{{#2}{#3}}}
+\AtEndDocument{\ifx\hyper@anchor\@undefined
+\let\contentsline\oldcontentsline
+\let\newlabel\oldnewlabel
+\fi}
+\fi}
+\global\let\hyper@last\relax 
+\gdef\HyperFirstAtBeginDocument#1{#1}
+\providecommand\HyField@AuxAddToFields[1]{}
+\providecommand\HyField@AuxAddToCoFields[2]{}
+\@writefile{toc}{\contentsline {section}{\numberline {1}Synthetic validation}{1}{section.1}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Model performance on the patient level validation split (AUROC).\relax }}{1}{table.caption.1}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces Held out replay evaluation (patient level bootstrap CIs).\relax }}{1}{table.caption.2}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces Alert level metrics on the held out replay patients.\relax }}{1}{table.caption.3}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {4}{\ignorespaces Feature block ablations (validation AUROC, 20 epochs each).\relax }}{2}{table.caption.4}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Pre arrest drift of one synthetic case patient over the last 12 hours before arrest (heart rate, blood pressure, saturation). The post arrest region is shaded and excluded downstream.\relax }}{2}{figure.caption.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {2}Real data stress test (Sudden Cardiac Death Holter Database)}{2}{section.2}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces One 30 second window: clean electrocardiogram, photoplethysmogram and arterial pressure (left) versus the same window with an injected noise artifact (right), which the quality gate rejects.\relax }}{3}{figure.caption.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {3}Slow risk layer}{3}{section.3}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Risk trajectories of the trained pipeline on the two held out patients. Triangles mark alerts, the dashed line is the threshold. The case patient (left) first crosses the threshold about 21 hours before arrest; the control (right) produces a small number of false alarms.\relax }}{4}{figure.caption.7}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Calibration curves per horizon on the held out patients. Predicted risk versus observed frequency; the diagonal is perfect calibration.\relax }}{4}{figure.caption.8}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {4}Robustness}{4}{section.4}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {5}{\ignorespaces Real data stress test (20 patients, 1829 windows).\relax }}{5}{table.caption.9}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Cross validated risk trajectories for one real patient, hours relative to ventricular fibrillation onset. The predicted risk does not rise before the real event in any variant.\relax }}{5}{figure.caption.10}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {5}Summary of findings}{5}{section.5}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces Train versus held out loss per epoch (mean over folds) for the three identity adversarial variants, and held out 6 hour AUROC per epoch.\relax }}{6}{figure.caption.11}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces Attention salience by lead time bin (mean over folds): the model spreads attention over history and puts near zero weight on the current window.\relax }}{6}{figure.caption.12}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {8}{\ignorespaces Slow risk score per 3 hour block for the record with the longest pre arrest region (logistic regression fitted on all records, illustrative). The score does not rise as the event approaches.\relax }}{6}{figure.caption.13}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {6}{\ignorespaces 6 h AUROC under perturbation (clean baseline 0.929 to 0.945).\relax }}{7}{table.caption.14}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {9}{\ignorespaces 6 h AUROC versus ECG waveform noise level (synthetic replay). No degradation down to SNR 5 dB.\relax }}{7}{figure.caption.15}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {10}{\ignorespaces Robustness sweep across all perturbation families (synthetic replay; the dotted line is the clean concat score).\relax }}{7}{figure.caption.16}\protected@file@percent }
+\gdef \@abspage@last{7}
