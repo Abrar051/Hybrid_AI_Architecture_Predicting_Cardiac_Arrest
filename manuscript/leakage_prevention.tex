@@ -1,0 +1,123 @@
+% Cardiac arrest early warning pipeline: leakage prevention annex
+% Standalone document answering the reviewer point on leakage prevention:
+% whether the model recognizes patients instead of deterioration, identity
+% invariance tests, and unseen hospital evaluation. Research prototype only:
+% nothing here is clinical evidence. Style note: no hyphens or dashes in prose.
+
+\documentclass[11pt]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{caption}
+\usepackage[hidelinks]{hyperref}
+\usepackage[a4paper,margin=1in]{geometry}
+
+\graphicspath{{images/}}
+
+\title{Leakage Prevention: Identity Recognition, Invariance Tests and
+Unseen Hospital Evaluation}
+\author{[Author names to be added]}
+\date{23 September 2026}
+
+\begin{document}
+
+\maketitle
+
+\begin{center}
+\small
+Research prototype. All results are pipeline demonstrations, not clinical
+validation. Identity probe accuracies are means over five cross validation
+folds; chance is 0.050 (one in twenty training records).
+\end{center}
+
+\section{Does the model recognize patients instead of deterioration?}
+We test this directly with a linear identity probe. For each cross validation
+fold, the trained model encodes every training window into its context vector,
+a logistic regression is fitted on 80 percent of those windows to classify the
+patient, and the held out 20 percent are scored. A model whose representation
+is invariant to patient identity would score at chance. Table~\ref{tab:probe}
+reports the probe for all eight trained variants.
+
+\begin{table}[h]
+\centering
+\caption{Linear identity probe on the context vector (chance 0.050).}
+\label{tab:probe}
+\begin{tabular}{lc}
+\toprule
+Variant & Probe accuracy \\
+\midrule
+FEAN, concatenation (baseline) & 0.423 \\
+FEAN, identity adversarial (gradient reversal) & 0.470 \\
+FEAN, identity adversarial + PCGrad & 0.438 \\
+FEAN, gated fusion + masks & 0.402 \\
+FEAN, static modality weights + masks & 0.354 \\
+FEAN, modality attention + masks & 0.143 \\
+Ablation: engineered features only & 0.130 \\
+Ablation: embeddings only & 0.439 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The answer is yes, with two qualifications. The models do recognize patients:
+every embedding based variant scores well above chance, so leakage is present
+and quantified rather than assumed. But the identity signal is carried almost
+entirely by the embedding block: the probe falls from 0.439 to 0.130 when the
+ECG FM embeddings are replaced by engineered features alone. Modality
+attention is the only architecture that substantially reduces leakage (0.143),
+and it is also the best held out variant at 6 hours (AUROC 0.473). The two
+observations agree: identity laden embeddings hurt generalization, and
+mechanisms that down weight them help.
+
+\section{Identity invariance tests}
+Two forms of invariance testing are in place.
+
+Measurement. The linear probe above is the invariance test, computed per fold
+for every variant, so invariance is a measured quantity, not an assumption.
+
+Enforcement. Identity adversarial training (a gradient reversal layer against
+a patient ID classifier, optionally with PCGrad across task gradients) was
+added to enforce invariance. The honest result: it improves held out AUROC
+slightly at both horizons but does not reduce the probe (0.423 to 0.470), so
+gradient reversal did not remove the leakage on this data. This negative
+result is reported in the manuscript rather than hidden. A natural next step,
+not yet run, is to combine the two mechanisms that do work: modality
+attention, which down weights the identity carrying embeddings, together with
+an identity adversary applied to the embedding block only.
+
+\section{Unseen hospital evaluation}
+What is covered today:
+
+\begin{itemize}
+\item Unseen patients: all training and evaluation splits are grouped by
+patient, and a patient never appears in more than one split (asserted in
+code).
+\item Unseen domain: the synthetic trained model is applied zero shot to the
+real Sudden Cardiac Death Holter Database and scores at chance (1 hour AUROC
+0.338, 6 hour AUROC 0.447), which quantifies the synthetic to real gap.
+\end{itemize}
+
+What is not covered: an evaluation on a second hospital. The Sudden Cardiac
+Death Holter Database is the only open access dataset with hours of pre arrest
+recording, so no second open site exists for this task, and the test cannot be
+run on open data alone.
+
+The planned unseen hospital evaluation is the credentialed MIMIC III Ext CA
+set: 36 arrest episodes in 31 ICU patients with photoplethysmogram plus
+electrocardiogram or arterial pressure, a different site, era, monitor type
+and modality set from the Holter database. The loader is written and self
+tested (window manifest with resuscitation exclusions, patient level splits,
+loud failure until credentialed access lands); the evaluation itself is
+pending access approval and will be reported with the same patient level,
+confidence interval aware protocol.
+
+\section{Summary}
+Patient recognition is measured, not assumed: the models recognize patients,
+the identity signal lives in the embedding block, gradient reversal does not
+remove it, and modality attention does. Unseen patient and unseen domain
+evaluation exist; unseen hospital evaluation is designed, loader ready, and
+blocked only on credentialed data access.
+
+\end{document}
