@@ -1,0 +1,95 @@
+[dev] 24630 windows -> 13 groups of 2000
+[dev] group 0: [dev_g0] ppg window embeddings: (2000, 512) | [dev_g0] done -> dev_g0_window_ecgfm.npy, dev_g0_window_papagei.npy, dev_g0_meta.csv
+[dev_g1] 2000 windows
+[dev_g1] ecg segments: (12000, 12, 2500)
+$ extract_ecgfm.py --input /home/abrar/Desktop/AI RPM Papers/Cardiac Arrest Detection/cache/embeddings/dev_g1_ecg_seg.npz ...
+
+
+/home/abrar/anaconda3/envs/ecgfm_env/lib/python3.10/site-packages/transformers/utils/generic.py:441: FutureWarning: `torch.utils._pytree._register_pytree_node` is deprecated. Please use `torch.utils._pytree.register_pytree_node` instead.
+  _torch_pytree._register_pytree_node(
+/home/abrar/anaconda3/envs/ecgfm_env/lib/python3.10/site-packages/transformers/utils/generic.py:309: FutureWarning: `torch.utils._pytree._register_pytree_node` is deprecated. Please use `torch.utils._pytree.register_pytree_node` instead.
+  _torch_pytree._register_pytree_node(
+
+Traceback (most recent call last):
+  File "/home/abrar/Desktop/AI RPM Papers/Cardiac Arrest Detection/scripts/embed_windows.py", line 152, in <module>
+    main()
+    ~~~~^^
+  File "/home/abrar/Desktop/AI RPM Papers/Cardiac Arrest Detection/scripts/embed_windows.py", line 135, in main
+    run_extractor("ecg", "scripts/extract_ecgfm.py",
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                  ["--input", str(seg_in), "--output", str(seg_out),
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                   "--checkpoint", str(WEIGHTS["ecg"]), "--batch-size", "16"])
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/abrar/Desktop/AI RPM Papers/Cardiac Arrest Detection/scripts/embed_windows.py", line 83, in run_extractor
+    raise RuntimeError(f"{script} failed with exit code {res.returncode}")
+RuntimeError: scripts/extract_ecgfm.py failed with exit code -9
+
+Traceback (most recent call last):
+  File "/home/abrar/Desktop/AI RPM Papers/Cardiac Arrest Detection/scripts/embed_all.py", line 116, in <module>
+    main()
+    ~~~~^^
+  File "/home/abrar/Desktop/AI RPM Papers/Cardiac Arrest Detection/scripts/embed_all.py", line 76, in main
+    raise RuntimeError(f"group {i} embedding failed")
+RuntimeError: group 1 embedding failed
+=== RESTART Sat Oct  3 11:10:21 AM BST 2026 ===
+[dev] 24630 windows -> 13 groups of 2000
+[dev] group 0 already embedded, skipping
+[dev_g1] 2000 windows
+[dev_g1] ecg segments: (12000, 12, 2500)
+$ extract_ecgfm.py --input /home/abrar/Desktop/AI RPM Papers/Cardiac Arrest Detection/cache/embeddings/dev_g1_ecg_seg.npz ...
+
+
+/home/abrar/anaconda3/envs/ecgfm_env/lib/python3.10/site-packages/transformers/utils/generic.py:441: FutureWarning: `torch.utils._pytree._register_pytree_node` is deprecated. Please use `torch.utils._pytree.register_pytree_node` instead.
+  _torch_pytree._register_pytree_node(
+/home/abrar/anaconda3/envs/ecgfm_env/lib/python3.10/site-packages/transformers/utils/generic.py:309: FutureWarning: `torch.utils._pytree._register_pytree_node` is deprecated. Please use `torch.utils._pytree.register_pytree_node` instead.
+  _torch_pytree._register_pytree_node(
+
+Traceback (most recent call last):
+  File "/home/abrar/Desktop/AI RPM Papers/Cardiac Arrest Detection/scripts/embed_windows.py", line 152, in <module>
+    main()
+    ~~~~^^
+  File "/home/abrar/Desktop/AI RPM Papers/Cardiac Arrest Detection/scripts/embed_windows.py", line 135, in main
+    run_extractor("ecg", "scripts/extract_ecgfm.py",
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                  ["--input", str(seg_in), "--output", str(seg_out),
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                   "--checkpoint", str(WEIGHTS["ecg"]), "--batch-size", "16"])
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/abrar/Desktop/AI RPM Papers/Cardiac Arrest Detection/scripts/embed_windows.py", line 83, in run_extractor
+    raise RuntimeError(f"{script} failed with exit code {res.returncode}")
+RuntimeError: scripts/extract_ecgfm.py failed with exit code -9
+
+Traceback (most recent call last):
+  File "/home/abrar/Desktop/AI RPM Papers/Cardiac Arrest Detection/scripts/embed_all.py", line 116, in <module>
+    main()
+    ~~~~^^
+  File "/home/abrar/Desktop/AI RPM Papers/Cardiac Arrest Detection/scripts/embed_all.py", line 76, in main
+    raise RuntimeError(f"group {i} embedding failed")
+RuntimeError: group 1 embedding failed
+[dev] 24630 windows -> 13 groups of 2000
+[dev] group 0 already embedded, skipping
+[dev] group 1: [dev_g1] ppg window embeddings: (2000, 512) | [dev_g1] done -> dev_g1_window_ecgfm.npy, dev_g1_window_papagei.npy, dev_g1_meta.csv
+[dev] group 2: [dev_g2] ppg window embeddings: (2000, 512) | [dev_g2] done -> dev_g2_window_ecgfm.npy, dev_g2_window_papagei.npy, dev_g2_meta.csv
+[dev] group 3: [dev_g3] ppg window embeddings: (2000, 512) | [dev_g3] done -> dev_g3_window_ecgfm.npy, dev_g3_window_papagei.npy, dev_g3_meta.csv
+[dev] 24630 windows -> 13 groups of 2000
+[dev] group 0 already embedded, skipping
+[dev] group 1 already embedded, skipping
+[dev] group 2 already embedded, skipping
+[dev] group 3 already embedded, skipping
+[dev] group 4: [dev_g4] ppg window embeddings: (2000, 512) | [dev_g4] done -> dev_g4_window_ecgfm.npy, dev_g4_window_papagei.npy, dev_g4_meta.csv
+[dev] group 5: [dev_g5] ppg window embeddings: (2000, 512) | [dev_g5] done -> dev_g5_window_ecgfm.npy, dev_g5_window_papagei.npy, dev_g5_meta.csv
+[dev] group 6: [dev_g6] ppg window embeddings: (2000, 512) | [dev_g6] done -> dev_g6_window_ecgfm.npy, dev_g6_window_papagei.npy, dev_g6_meta.csv
+[dev] group 7: [dev_g7] ppg window embeddings: (2000, 512) | [dev_g7] done -> dev_g7_window_ecgfm.npy, dev_g7_window_papagei.npy, dev_g7_meta.csv
+[dev] group 8: [dev_g8] ppg window embeddings: (2000, 512) | [dev_g8] done -> dev_g8_window_ecgfm.npy, dev_g8_window_papagei.npy, dev_g8_meta.csv
+[dev] group 9: [dev_g9] ppg window embeddings: (2000, 512) | [dev_g9] done -> dev_g9_window_ecgfm.npy, dev_g9_window_papagei.npy, dev_g9_meta.csv
+[dev] group 10: [dev_g10] ppg window embeddings: (2000, 512) | [dev_g10] done -> dev_g10_window_ecgfm.npy, dev_g10_window_papagei.npy, dev_g10_meta.csv
+[dev] group 11: [dev_g11] ppg window embeddings: (2000, 512) | [dev_g11] done -> dev_g11_window_ecgfm.npy, dev_g11_window_papagei.npy, dev_g11_meta.csv
+[dev] group 12: [dev_g12] ppg window embeddings: (630, 512) | [dev_g12] done -> dev_g12_window_ecgfm.npy, dev_g12_window_papagei.npy, dev_g12_meta.csv
+[dev] concat done: 24630 windows -> dev_window_*.npy + dev_meta.csv
+[dev] group files cleaned
+[dev] final embeddings already cached, skipping
+[dev] final embeddings already cached, skipping
+[dev] final embeddings already cached, skipping
+[dev] final embeddings already cached, skipping
+[dev] final embeddings already cached, skipping

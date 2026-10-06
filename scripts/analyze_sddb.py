@@ -27,6 +27,7 @@ import numpy as np
 import pandas as pd
 import torch
 from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.metrics import average_precision_score, roc_auc_score
 from sklearn.utils import resample
 
@@ -72,7 +73,9 @@ ABLATION_EPOCHS = 10
 
 def build_manifest():
     """Windows of 5 min: positives = last 6 h before VF onset, negatives = an
-    early 6 h span of the record. Segments = 30 s at the window middle."""
+    early 6 h span of the record. HRV features follow the ESC/NASPE 1996
+    standard: computed over the FULL 5 min window (reviewer point 7). The 30 s
+    middle slice is kept only for the ECG-FM embedding path."""
     rows, segs = [], []
     n_skipped = 0
     for rec in VF_ONSET:
@@ -94,12 +97,13 @@ def build_manifest():
                 t_end = t_start + 300
                 if kind == "pre" and t_end > onset - FLOOR_S:
                     continue
-                i0 = w * win + (win - 30 * int(FS_TARGET)) // 2
-                seg = sig[i0:i0 + 30 * int(FS_TARGET)]
-                if not np.isfinite(seg).all():        # digitized-tape NaN gaps
+                win_sig = sig[w * win:(w + 1) * win]  # full 5 min -> HRV (ESC/NASPE)
+                if not np.isfinite(win_sig).all():    # digitized-tape NaN gaps
                     n_skipped += 1
                     continue
-                ef = ecg_features(seg[:, 0])
+                ef = ecg_features(win_sig[:, 0])
+                i0 = w * win + (win - 30 * int(FS_TARGET)) // 2
+                seg = sig[i0:i0 + 30 * int(FS_TARGET)]
                 rows.append(dict(
                     record=rec, kind=kind, t_start_s=t_start, t_end_s=t_end,
                     onset_s=onset, hr=ef["hr"], rrsd=ef["rrsd"],
@@ -182,25 +186,20 @@ def make_sequences(rec_codes, kind_codes, feats, labels, tte, ids, masks=None,
     return out
 
 
-def identity_probe(model, Xtr, Ltr, idtr, Mtr=None, val_frac=0.2):
-    """Linear probe on train contexts: LR on 80% of windows, classify the rest.
-    Chance = 1 / n_train_records."""
+def identity_probe(model, Xtr, Ltr, idtr, Xte, Lte, idte, Mtr=None, Mte=None):
+    """Linear identity probe per the reviewer-requested protocol: LR fitted on
+    ALL train-fold window contexts, scored on the held-out fold's windows.
+    Chance = majority-class share among the scored windows."""
     with torch.no_grad():
-        ctx = model.encode(torch.from_numpy(Xtr), torch.from_numpy(Ltr),
-                           mask=None if Mtr is None else torch.from_numpy(Mtr)).numpy()
-    rs = np.random.default_rng(SEED)
-    held, fit = [], []
-    for c in np.unique(idtr):
-        pos = np.where(idtr == c)[0]
-        rs.shuffle(pos)
-        k = max(1, int(val_frac * len(pos)))
-        held.append(pos[:k])
-        fit.append(pos[k:])
-    held = np.concatenate(held)
-    fit = np.concatenate(fit)
+        ctx_tr = model.encode(torch.from_numpy(Xtr), torch.from_numpy(Ltr),
+                              mask=None if Mtr is None else torch.from_numpy(Mtr)).numpy()
+        ctx_te = model.encode(torch.from_numpy(Xte), torch.from_numpy(Lte),
+                              mask=None if Mte is None else torch.from_numpy(Mte)).numpy()
     clf = LogisticRegression(max_iter=2000)
-    clf.fit(ctx[fit], idtr[fit])
-    return float((clf.predict(ctx[held]) == idtr[held]).mean())
+    clf.fit(ctx_tr, idtr)
+    acc = float((clf.predict(ctx_te) == idte).mean())
+    chance = float(np.max(np.bincount(idte)) / len(idte))
+    return acc, chance
 
 
 def run_cv(meta, feats, masks, labels, tte, ids, kind_codes, variant, spec,
@@ -244,8 +243,9 @@ def run_cv(meta, feats, masks, labels, tte, ids, kind_codes, variant, spec,
             adv_lam=spec["adv_lam"], adv_ramp_epochs=5,
             use_pcgrad=spec["use_pcgrad"], seed=SEED + k, verbose=0, **mask_kw)
         history.append(hist)
-        probes.append(identity_probe(model, Xtr, Ltr, idtr,
-                                     Mtr if fusion != "concat" else None))
+        probes.append(identity_probe(model, Xtr, Ltr, idtr, Xte, Lte, idte,
+                                     Mtr if fusion != "concat" else None,
+                                     Mte if fusion != "concat" else None))
         fwd_kw = dict(mask=torch.from_numpy(Mte)) if fusion != "concat" else {}
         with torch.no_grad():
             out = model(torch.from_numpy(Xte), torch.from_numpy(Lte),
@@ -271,7 +271,53 @@ def run_cv(meta, feats, masks, labels, tte, ids, kind_codes, variant, spec,
         print(f"  fold {k}: test records {sorted(int(r) for r in records[test_idx])} "
               f"(n={int(te.sum())}) done | val AUC6h last epoch "
               f"{hist[-1].get('val_auc_6h')}")
-    return pred, history, attn_bins, float(np.mean(probes))
+    return pred, history, attn_bins, probes
+
+
+def run_baselines(meta, labels, rec_codes):
+    """LR and gradient boosting on per-window engineered features (reviewer
+    point 4): 5-fold CV grouped by record with the same fold seed/order as the
+    deep models; record-level bootstrap CIs per horizon."""
+    base_cols = ["hr"] + [c for c in ENG_COLS if c in meta.columns]
+    X = meta[base_cols].to_numpy(np.float64)
+    for j in range(X.shape[1]):        # NaN HRV in very noisy windows -> median
+        col = X[:, j]
+        fin = np.isfinite(col)
+        if not fin.all():
+            col[~fin] = np.median(col[fin]) if fin.any() else 0.0
+    # drop constant columns (abp/ptt/trends are zero-filled on SDDB)
+    keep = X.std(0) > 1e-6
+    X = X[:, keep]
+    records = np.unique(rec_codes)
+    rs = np.random.default_rng(SEED)
+    folds = np.array_split(rs.permutation(len(records)), 5)
+    models = {"logistic": LogisticRegression(max_iter=2000),
+              "gradient_boosting": GradientBoostingClassifier(
+                  n_estimators=100, random_state=SEED)}
+    pred = {name: {H: np.zeros(len(meta)) for H in HORIZONS}
+            for name in models}
+    for k, test_idx in enumerate(folds):
+        te = np.isin(rec_codes, records[test_idx])
+        tr = ~te
+        mu, sd = X[tr].mean(0), X[tr].std(0)
+        z = (X - mu) / (sd + 1e-8)
+        for name, clf in models.items():
+            for H in HORIZONS:
+                clf.fit(z[tr], labels[H][tr])
+                pred[name][H][te] = clf.predict_proba(z[te])[:, 1]
+    out = {}
+    for name in models:
+        out[name] = {}
+        for H in HORIZONS:
+            if labels[H].sum() == 0 or (labels[H] == 0).sum() == 0:
+                out[name][f"{H}h"] = None
+                continue
+            auc, alo, ahi = bootstrap_metric(roc_auc_score, labels[H],
+                                             pred[name][H], rec_codes)
+            out[name][f"{H}h"] = {"auroc": [auc, alo, ahi],
+                                  "n_pos": int(labels[H].sum())}
+            print(f"  {name:<18} {H:>2}h: AUROC {auc:.3f} [{alo:.3f}, {ahi:.3f}]")
+    return out
 
 
 def bootstrap_metric(metric, y, p, rec_codes, n_iter=1000):
@@ -301,6 +347,12 @@ def main():
                     help="path for the metrics JSON")
     ap.add_argument("--fig-prefix", default="sddb_v2",
                     help="prefix for figure and profile filenames under outputs/")
+    ap.add_argument("--model-dir", default=str(PROJECT / "cache/models/ews_v1"),
+                    help="RiskPipeline dir for the zero-shot row "
+                         "(cache/models/ews_v2 after the synthetic rebuild)")
+    ap.add_argument("--zero-shot-only", action="store_true",
+                    help="only recompute the zero-shot row and MERGE it into "
+                         "the existing --out JSON (CV/attention untouched)")
     args = ap.parse_args()
 
     require_sddb()
@@ -321,17 +373,15 @@ def main():
           f"before onset to supply 24 h negatives)")
     print(f"modality masks: {dict(zip(('vitals', 'eng', 'ecg', 'ppg'), masks.mean(0)))}")
 
-    results = {"zero_shot": {}, "cv": {}, "ablations": {}, "attention": {},
-               "identity_probe": {}, "learning_curves_summary": {}}
-
     # ---------- (a) zero-shot: synthetic-trained model on SDDB --------------
     print("\n(a) zero-shot (synthetic-trained model):")
-    pipe = RiskPipeline.load(PROJECT / "cache/models/ews_v1")
+    pipe = RiskPipeline.load(Path(args.model_dir))
     z = (feats - pipe.feat_mean) / (pipe.feat_std + 1e-8)
     Xz, Lz, _, _, _ = make_sequences(rec_codes, kind_codes, z, labels, tte, ids)
     with torch.no_grad():
         out = pipe.model(torch.from_numpy(Xz), torch.from_numpy(Lz))
     probs_zs = {H: torch.sigmoid(out["risk"][H]).numpy() for H in HORIZONS}
+    zero_shot = {}
     for H in HORIZONS:
         auc = roc_auc_score(labels[H], probs_zs[H])
         ap = average_precision_score(labels[H], probs_zs[H])
@@ -339,8 +389,22 @@ def main():
             note = " (degenerate: no negatives on SDDB)"
         else:
             note = ""
-        results["zero_shot"][f"{H}h"] = {"auroc": auc, "auprc": ap, "note": note}
+        zero_shot[f"{H}h"] = {"auroc": auc, "auprc": ap,
+                              "note": note, "model_dir": args.model_dir}
         print(f"  {H:>2}h: AUROC {auc:.3f} | AUPRC {ap:.3f}{note}")
+
+    if args.zero_shot_only:
+        # merge into the existing JSON: update zero_shot, preserve everything else
+        out_path = Path(args.out)
+        merged = json.loads(out_path.read_text()) if out_path.exists() else {}
+        merged["zero_shot"] = zero_shot
+        merged["zero_shot_model_dir"] = args.model_dir
+        out_path.write_text(json.dumps(merged, indent=1, default=str))
+        print(f"\nzero-shot row updated in {out_path} (all other blocks preserved)")
+        return
+
+    results = {"zero_shot": zero_shot, "cv": {}, "ablations": {},
+               "attention": {}, "identity_probe": {}, "learning_curves_summary": {}}
 
     # ---------- (b) 5-fold grouped-by-record CV, v2 variants -----------------
     variants = args.variants.split(",")
@@ -360,7 +424,10 @@ def main():
         all_hist[name] = hist
         preds[name] = pred
         attn_profiles[name] = attn
-        results["identity_probe"][name] = probe
+        results["identity_probe"][name] = {
+            "acc": float(np.mean([p[0] for p in probe])),
+            "chance_majority": float(np.mean([p[1] for p in probe])),
+            "folds": [[float(a), float(c)] for a, c in probe]}
         results["attention"][name] = {b: float(np.mean([w[71] for w in lst]))
                                       for b, lst in attn.items() if lst}
         results["cv"][name] = {}
@@ -388,8 +455,14 @@ def main():
         results["cv"][name]["time_avg_auc_leadtime"] = float(np.mean(tavg)) if tavg else None
         print(f"  time-averaged AUC across lead-time bins: "
               f"{results['cv'][name]['time_avg_auc_leadtime']}")
-        print(f"  identity probe acc (train windows): {probe:.3f} "
-              f"(chance 1/{len(records)} = {1 / len(records):.3f})")
+        print(f"  identity probe acc (held-out windows): "
+              f"{results['identity_probe'][name]['acc']:.3f} "
+              f"(chance majority-class "
+              f"{results['identity_probe'][name]['chance_majority']:.3f})")
+
+    # ---------- (b2) LR / GBM baselines on engineered window features --------
+    print("\n(b2) LR / GBM baselines (engineered window features, same folds):")
+    results["baselines"] = run_baselines(meta, labels, rec_codes)
 
     # ---------- (c) feature-block ablations on real data ---------------------
     if not args.skip_ablations:
@@ -426,6 +499,17 @@ def main():
     results["n_windows"] = n
     results["n_records"] = len(records)
     results["seed"] = SEED
+    results["denominators"] = {
+        "windows_total": n,
+        "records": int(meta["record"].nunique()),
+        "per_horizon": {
+            str(H): {"n_pos": int(labels[H].sum()),
+                     "n_neg": int((labels[H] == 0).sum()),
+                     "records_pos": int(meta.loc[labels[H] == 1, "record"].nunique()),
+                     "records_neg": int(meta.loc[labels[H] == 0, "record"].nunique())}
+            for H in HORIZONS},
+        "hrv_note": "HRV features computed over the full 5 min window "
+                    "(ESC/NASPE 1996 standard)"}
     results["protocol_note"] = ("sequences respect record and span boundaries; "
                                 "torch seed 7 at init and per fold")
     results["disclaimer"] = ("research prototype; Holter data, 20 patients, "

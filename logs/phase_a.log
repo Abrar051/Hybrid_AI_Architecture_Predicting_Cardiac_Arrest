@@ -1,0 +1,363 @@
+[10:18:10] phase_a_runner start (dry-run=True, done=[])
+[10:18:37] phase_a_runner start (dry-run=True, done=[])
+[10:19:01] phase_a_runner start (dry-run=False, done=[])
+[10:19:01] embedding not done yet; groups: 4
+[10:24:01] embedding not done yet; groups: 4
+[10:29:02] embedding not done yet; groups: 4
+[10:34:02] embedding not done yet; groups: 4
+[10:39:02] embedding not done yet; groups: 4
+[10:44:02] embedding not done yet; groups: 4
+[10:49:02] embedding not done yet; groups: 4
+[10:54:02] embedding not done yet; groups: 4
+[10:59:03] embedding not done yet; groups: 5
+[11:04:03] embedding not done yet; groups: 6
+[11:09:03] embedding not done yet; groups: 6
+[11:14:03] embedding not done yet; groups: 6
+[11:19:03] embedding not done yet; groups: 6
+[11:24:03] embedding not done yet; groups: 6
+[11:29:03] embedding not done yet; groups: 6
+[11:34:03] embedding not done yet; groups: 6
+[11:39:11] embedding not done yet; groups: 6
+[11:44:11] embedding not done yet; groups: 6
+[11:49:11] embedding not done yet; groups: 6
+[11:54:11] embedding not done yet; groups: 6
+[11:59:12] embedding not done yet; groups: 6
+[12:04:12] embedding not done yet; groups: 6
+[12:09:12] embedding not done yet; groups: 6
+[23:26:32] phase_a_runner start (dry-run=False, done=[])
+[23:26:32] embedding not done yet; groups: 8
+[23:31:32] embedding not done yet; groups: 8
+[23:36:32] embedding not done yet; groups: 8
+[23:41:32] embedding not done yet; groups: 8
+[23:46:32] embedding not done yet; groups: 8
+[23:51:32] embedding not done yet; groups: 8
+[23:56:32] embedding not done yet; groups: 8
+[00:01:32] embedding not done yet; groups: 8
+[00:06:33] embedding not done yet; groups: 8
+[00:25:26] embedding not done yet; groups: 8
+[00:30:26] embedding not done yet; groups: 8
+[00:35:27] embedding not done yet; groups: 8
+[00:40:27] embedding not done yet; groups: 8
+[00:45:27] embedding not done yet; groups: 9
+[10:18:02] phase_a_runner start (dry-run=False, done=[])
+[10:18:02] phase_a_runner start (dry-run=False, done=[])
+[10:18:02] relaunching embedding tag dev
+[10:18:02] relaunching embedding tag dev
+[10:21:02] relaunching embedding tag test
+[10:21:02] relaunching embedding tag test
+[10:24:02] embedding not done yet; groups: 9
+[10:24:02] embedding not done yet; groups: 9
+[10:29:02] embedding not done yet; groups: 9
+[10:29:02] embedding not done yet; groups: 9
+[10:34:02] embedding not done yet; groups: 9
+[10:34:02] embedding not done yet; groups: 9
+[10:39:02] embedding not done yet; groups: 9
+[10:39:02] embedding not done yet; groups: 9
+[10:44:02] embedding not done yet; groups: 9
+[10:44:02] embedding not done yet; groups: 9
+[10:49:02] embedding not done yet; groups: 9
+[10:49:02] embedding not done yet; groups: 9
+[10:54:02] embedding not done yet; groups: 9
+[10:54:02] embedding not done yet; groups: 9
+[10:59:02] embedding not done yet; groups: 9
+[10:59:02] embedding not done yet; groups: 9
+[11:04:02] embedding not done yet; groups: 9
+[11:04:02] embedding not done yet; groups: 9
+[11:09:02] embedding not done yet; groups: 9
+[11:09:02] embedding not done yet; groups: 9
+[11:14:03] embedding not done yet; groups: 9
+[11:14:03] embedding not done yet; groups: 9
+[11:19:03] embedding not done yet; groups: 9
+[11:19:03] embedding not done yet; groups: 9
+[11:24:03] embedding not done yet; groups: 10
+[11:24:03] embedding not done yet; groups: 10
+[11:29:03] embedding not done yet; groups: 11
+[11:29:03] embedding not done yet; groups: 11
+[11:34:03] embedding not done yet; groups: 11
+[11:34:03] embedding not done yet; groups: 11
+[11:39:03] embedding not done yet; groups: 11
+[11:39:03] embedding not done yet; groups: 11
+[11:44:03] embedding not done yet; groups: 11
+[11:44:03] embedding not done yet; groups: 11
+[12:13:54] embedding not done yet; groups: 11
+[12:13:54] embedding not done yet; groups: 11
+[12:18:54] embedding not done yet; groups: 11
+[12:18:54] embedding not done yet; groups: 11
+[12:23:54] embedding not done yet; groups: 11
+[12:23:54] embedding not done yet; groups: 11
+[12:28:54] embedding not done yet; groups: 11
+[12:28:54] embedding not done yet; groups: 11
+[12:33:54] embedding not done yet; groups: 11
+[12:33:54] embedding not done yet; groups: 11
+[12:38:55] embedding not done yet; groups: 11
+[12:38:55] embedding not done yet; groups: 11
+[12:43:55] embedding not done yet; groups: 11
+[12:43:55] embedding not done yet; groups: 11
+[12:48:55] embedding not done yet; groups: 11
+[12:48:55] embedding not done yet; groups: 11
+[12:53:55] embedding not done yet; groups: 12
+[12:53:55] embedding not done yet; groups: 12
+[12:58:55] embedding not done yet; groups: 12
+[12:58:55] embedding not done yet; groups: 12
+[13:48:38] embedding not done yet; groups: 13
+[13:48:38] embedding not done yet; groups: 13
+[13:53:39] embedding not done yet; groups: 13
+[13:53:39] embedding not done yet; groups: 13
+[13:58:39] embedding not done yet; groups: 13
+[13:58:39] embedding not done yet; groups: 13
+[14:03:39] embedding not done yet; groups: 13
+[14:03:39] embedding not done yet; groups: 13
+[14:08:39] embedding not done yet; groups: 13
+[14:08:39] embedding not done yet; groups: 13
+[14:13:39] embedding not done yet; groups: 13
+[14:13:39] embedding not done yet; groups: 13
+[14:18:39] embedding not done yet; groups: 13
+[14:18:39] embedding not done yet; groups: 13
+[15:22:30] embedding not done yet; groups: 13
+[15:22:30] embedding not done yet; groups: 13
+[15:27:30] embedding not done yet; groups: 13
+[15:27:30] embedding not done yet; groups: 13
+[15:32:30] embedding not done yet; groups: 13
+[15:32:30] embedding not done yet; groups: 13
+[15:37:31] embedding not done yet; groups: 13
+[15:37:31] embedding not done yet; groups: 13
+[15:42:31] embedding not done yet; groups: 14
+[15:42:31] embedding not done yet; groups: 14
+[15:47:31] embedding not done yet; groups: 14
+[15:47:31] embedding not done yet; groups: 14
+[15:52:31] embedding not done yet; groups: 15
+[15:52:31] embedding not done yet; groups: 15
+[15:57:31] embedding not done yet; groups: 15
+[15:57:31] embedding not done yet; groups: 15
+[16:22:27] embedding not done yet; groups: 15
+[16:22:27] embedding not done yet; groups: 15
+[16:27:28] embedding not done yet; groups: 15
+[16:27:28] embedding not done yet; groups: 15
+[16:32:28] embedding not done yet; groups: 15
+[16:32:28] embedding not done yet; groups: 15
+[16:37:28] embedding not done yet; groups: 15
+[16:37:28] embedding not done yet; groups: 15
+[16:42:28] embedding not done yet; groups: 15
+[16:42:28] embedding not done yet; groups: 15
+[16:47:28] embedding not done yet; groups: 15
+[16:47:28] embedding not done yet; groups: 15
+[16:52:28] embedding not done yet; groups: 15
+[16:52:28] embedding not done yet; groups: 15
+[16:57:29] embedding not done yet; groups: 15
+[16:57:29] embedding not done yet; groups: 15
+[17:28:47] embedding not done yet; groups: 15
+[17:28:47] embedding not done yet; groups: 15
+[17:33:47] embedding not done yet; groups: 15
+[17:33:47] embedding not done yet; groups: 15
+[17:38:47] embedding not done yet; groups: 16
+[17:38:47] embedding not done yet; groups: 16
+[17:43:47] embedding not done yet; groups: 16
+[17:43:47] embedding not done yet; groups: 16
+[17:48:47] embedding not done yet; groups: 17
+[17:48:47] embedding not done yet; groups: 17
+[17:53:47] embedding not done yet; groups: 17
+[17:53:47] embedding not done yet; groups: 17
+[17:58:47] embedding not done yet; groups: 17
+[17:58:47] embedding not done yet; groups: 17
+[18:03:47] embedding not done yet; groups: 17
+[18:03:47] embedding not done yet; groups: 17
+[18:08:48] embedding not done yet; groups: 17
+[18:08:48] embedding not done yet; groups: 17
+[18:13:48] embedding not done yet; groups: 17
+[18:13:48] embedding not done yet; groups: 17
+[18:18:48] embedding not done yet; groups: 17
+[18:18:48] embedding not done yet; groups: 17
+[18:23:48] embedding not done yet; groups: 17
+[18:23:48] embedding not done yet; groups: 17
+[18:28:48] embedding not done yet; groups: 17
+[18:28:48] embedding not done yet; groups: 17
+[18:33:48] embedding not done yet; groups: 17
+[18:33:48] embedding not done yet; groups: 17
+[18:38:48] embedding not done yet; groups: 17
+[18:38:48] embedding not done yet; groups: 17
+[19:19:55] embedding not done yet; groups: 17
+[19:19:55] embedding not done yet; groups: 17
+[19:24:55] embedding not done yet; groups: 18
+[19:24:55] embedding not done yet; groups: 18
+[19:29:55] embedding not done yet; groups: 18
+[19:29:55] embedding not done yet; groups: 18
+[19:34:56] embedding not done yet; groups: 18
+[19:34:56] embedding not done yet; groups: 18
+[19:39:56] embedding not done yet; groups: 19
+[19:39:56] embedding not done yet; groups: 19
+[19:44:56] embedding not done yet; groups: 19
+[19:44:56] embedding not done yet; groups: 19
+[19:49:56] embedding not done yet; groups: 19
+[19:49:56] embedding not done yet; groups: 19
+[19:54:56] embedding not done yet; groups: 19
+[19:54:56] embedding not done yet; groups: 19
+[19:59:56] embedding not done yet; groups: 19
+[19:59:56] embedding not done yet; groups: 19
+[20:04:56] embedding not done yet; groups: 19
+[20:04:56] embedding not done yet; groups: 19
+[20:09:57] embedding not done yet; groups: 19
+[20:09:57] embedding not done yet; groups: 19
+[20:14:57] embedding not done yet; groups: 19
+[20:14:57] embedding not done yet; groups: 19
+[20:19:57] embedding not done yet; groups: 19
+[20:19:57] embedding not done yet; groups: 19
+[20:24:57] embedding not done yet; groups: 19
+[20:24:57] embedding not done yet; groups: 19
+[20:29:57] embedding not done yet; groups: 19
+[20:29:57] embedding not done yet; groups: 19
+[20:34:57] embedding not done yet; groups: 19
+[20:34:57] embedding not done yet; groups: 19
+[20:39:57] embedding not done yet; groups: 19
+[20:39:57] embedding not done yet; groups: 19
+[20:44:57] embedding not done yet; groups: 19
+[20:44:57] embedding not done yet; groups: 19
+[20:49:57] embedding not done yet; groups: 20
+[20:49:57] embedding not done yet; groups: 20
+[20:54:57] embedding not done yet; groups: 21
+[20:54:57] embedding not done yet; groups: 21
+[20:59:58] embedding not done yet; groups: 21
+[20:59:58] embedding not done yet; groups: 21
+[21:04:58] embedding not done yet; groups: 21
+[21:04:58] embedding not done yet; groups: 21
+[21:09:58] embedding not done yet; groups: 21
+[21:09:58] embedding not done yet; groups: 21
+[21:14:58] embedding not done yet; groups: 21
+[21:14:58] embedding not done yet; groups: 21
+[21:19:58] embedding not done yet; groups: 21
+[21:19:58] embedding not done yet; groups: 21
+[21:24:58] embedding not done yet; groups: 21
+[21:24:58] embedding not done yet; groups: 21
+[21:29:58] embedding not done yet; groups: 21
+[21:29:58] embedding not done yet; groups: 21
+[22:56:24] phase_a_runner start (dry-run=False, done=[])
+[22:56:24] embedding not done yet; groups: 21
+[23:01:24] embedding not done yet; groups: 21
+[23:06:24] embedding not done yet; groups: 21
+[23:11:24] embedding not done yet; groups: 21
+[23:16:24] embedding not done yet; groups: 21
+[23:21:24] embedding not done yet; groups: 22
+[23:26:24] embedding not done yet; groups: 23
+[23:31:24] embedding not done yet; groups: 23
+[23:36:24] embedding not done yet; groups: 23
+[23:41:24] embedding not done yet; groups: 23
+[23:46:24] embedding not done yet; groups: 23
+[23:51:25] embedding not done yet; groups: 23
+[23:56:25] embedding not done yet; groups: 23
+[00:01:25] embedding not done yet; groups: 23
+[00:06:25] embedding not done yet; groups: 23
+[00:11:26] embedding not done yet; groups: 23
+[00:16:26] embedding not done yet; groups: 23
+[00:21:27] embedding not done yet; groups: 23
+[00:26:27] embedding not done yet; groups: 23
+[00:31:27] embedding not done yet; groups: 23
+[00:36:27] embedding not done yet; groups: 23
+[00:41:28] relaunching embedding tag test
+[00:44:28] embedding not done yet; groups: 24
+[00:49:28] embedding not done yet; groups: 24
+[00:54:28] embedding not done yet; groups: 24
+[00:59:28] relaunching embedding tag dev
+[01:02:28] embedding not done yet; groups: 12
+[01:07:28] relaunching embedding tag dev
+[01:10:28] embedding not done yet; groups: 12
+[01:15:28] relaunching embedding tag dev
+[01:18:28] embedding not done yet; groups: 12
+[01:23:28] relaunching embedding tag dev
+[01:26:28] embedding not done yet; groups: 13
+[01:31:28] relaunching embedding tag dev
+[01:34:28] embedding not done yet; groups: 0
+[01:39:28] embedding complete: all final files present
+[01:39:28] [start] train_fean (attempt 1/3)
+[01:50:43]   train_fean |   epoch 17: train 0.6728 | val 1.2725 | val AUC6h 0.948440285204991 | adv_lam 0.00
+[01:50:43]   train_fean |   epoch 18: train 0.6539 | val 1.2901 | val AUC6h 0.9545163915368519 | adv_lam 0.00
+[01:50:43]   train_fean |   epoch 19: train 0.5636 | val 1.4863 | val AUC6h 0.94923273657289 | adv_lam 0.00
+[01:50:43]   train_fean | stderr: ['  File "/home/abrar/Desktop/AI RPM Papers/Cardiac Arrest Detection/scripts/train_fean_models.py", line 87, in main', '    pipe = RiskPipeline(model, mu, sd, **ALERT)', "TypeError: RiskPipeline.__init__() got an unexpected keyword argument 'horizon_h'"]
+[01:50:43] [fail] train_fean attempt 1 failed; retrying in 120s
+[01:52:43] [start] train_fean (attempt 2/3)
+[01:53:56] [fail] train_fean attempt 2 failed; retrying in 120s
+[01:55:56] [start] train_fean (attempt 3/3)
+[02:28:29]   train_fean | seed 2 val AUROC: 1h=0.999  6h=0.937  24h=0.692
+[02:28:29]   train_fean | canonical checkpoint (seed 42) -> /home/abrar/Desktop/AI RPM Papers/Cardiac Arrest Detection/cache/models/ews_v2
+[02:28:29]   train_fean | PASS: FEAN trained for all seeds; val AUROCs exported.
+[02:28:29] [done] train_fean in 1953s
+[02:28:29] [start] train_ablations (attempt 1/3)
+[03:12:06]   train_ablations | vitals+embeddings  trained 20 epochs -> vitals+embeddings.pt
+[03:12:06]   train_ablations | vitals+embeddings  val AUROC 1h=1.000  6h=0.947  24h=0.748
+[03:12:06]   train_ablations | PASS: ablations trained; val AUROCs exported.
+[03:12:06] [done] train_ablations in 2616s
+[03:12:06] [start] notebook (attempt 1/3)
+[03:19:33]   notebook | stderr: ['[NbConvertApp] Converting notebook Pipeline.ipynb to notebook', '[NbConvertApp] Writing 689417 bytes to /tmp/pipeline_check.ipynb']
+[03:19:33]   notebook | executed notebook copied to Pipeline.ipynb
+[03:19:33] [done] notebook in 448s
+[03:19:33] [start] test_fusion (attempt 1/3)
+[04:18:29]   test_fusion | 
+[04:18:29]   test_fusion | PASS: all fusion modes train without NaNs; mask-aware modes stay finite with the PPG stream removed at evaluation time.
+[04:18:29]   test_fusion | NOTE: on synthetic data the PPG embedding carries little signal, so fusion gains here are expected to be small; the real comparison is on SDDB, where PPG is entirely absent and the mask matters most.
+[04:18:29] [done] test_fusion in 3536s
+[04:18:29] [start] test_fean_v2 (attempt 1/3)
+[04:26:56]   test_fean_v2 |   identity probe accuracy on held-out train windows: 0.296 (chance 1/153 = 0.007; lower = identity removed)
+[04:26:56]   test_fean_v2 | 
+[04:26:56]   test_fean_v2 | === adv (15 epochs, batch 256) ===
+[04:26:56]   test_fean_v2 | stderr: ['    )', '    ^', 'IndexError: Target 156 is out of bounds.']
+[04:26:56] [fail] test_fean_v2 attempt 1 failed; retrying in 120s
+[04:28:56] [start] test_fean_v2 (attempt 2/3)
+[04:37:22]   test_fean_v2 |   identity probe accuracy on held-out train windows: 0.296 (chance 1/153 = 0.007; lower = identity removed)
+[04:37:22]   test_fean_v2 | 
+[04:37:22]   test_fean_v2 | === adv (15 epochs, batch 256) ===
+[04:37:22]   test_fean_v2 | stderr: ['    )', '    ^', 'IndexError: Target 156 is out of bounds.']
+[04:37:22] [fail] test_fean_v2 attempt 2 failed; retrying in 120s
+[04:39:22] [start] test_fean_v2 (attempt 3/3)
+[04:47:47]   test_fean_v2 |   identity probe accuracy on held-out train windows: 0.296 (chance 1/153 = 0.007; lower = identity removed)
+[04:47:47]   test_fean_v2 | 
+[04:47:47]   test_fean_v2 | === adv (15 epochs, batch 256) ===
+[04:47:47]   test_fean_v2 | stderr: ['    )', '    ^', 'IndexError: Target 156 is out of bounds.']
+[04:47:47] [ABORT] test_fean_v2 failed 3 times
+[04:49:47] ABORTED at test_fean_v2; fix the failure and re-run the runner (completed milestones are cached).
+[04:51:56] phase_a_runner start (dry-run=False, done=['embedding', 'train_fean', 'train_ablations', 'notebook', 'test_fusion'])
+[04:51:56] [skip] train_fean already done
+[04:51:56] [skip] train_ablations already done
+[04:51:56] [skip] notebook already done
+[04:51:56] [skip] test_fusion already done
+[04:51:56] [start] test_fean_v2 (attempt 1/3)
+[05:45:42]   test_fean_v2 | 
+[05:45:42]   test_fean_v2 | PASS: v2 variants train without NaNs, losses decrease, and the plain control learns the synthetic signal.
+[05:45:42]   test_fean_v2 | NOTE: the identity probe stays high for ALL variants here because on synthetic data patient identity IS the outcome signal (case/control is per patient), so the BCE tasks rebuild identity info that the adversary removes. The meaningful identity probe comparison is on SDDB, where outcome varies within patient.
+[05:45:42] [done] test_fean_v2 in 3226s
+[05:45:42] [start] robustness (attempt 1/3)
+[06:51:42]   robustness | 
+[06:51:42]   robustness | saved -> /home/abrar/Desktop/AI RPM Papers/Cardiac Arrest Detection/outputs/robustness_metrics.json
+[06:51:42]   robustness | (feature perturbations carry patient-bootstrap CIs; waveform tags are 200-window point estimates)
+[06:51:42] [done] robustness in 3960s
+[06:51:42] [start] sddb_zero_shot (attempt 1/3)
+[06:51:45]   sddb_zero_shot | stderr: ['  File "/home/abrar/Desktop/AI RPM Papers/Cardiac Arrest Detection/scripts/sddb_utils.py", line 13, in <module>', '    import wfdb', "ModuleNotFoundError: No module named 'wfdb'"]
+[06:51:45] [fail] sddb_zero_shot attempt 1 failed; retrying in 120s
+[06:53:45] [start] sddb_zero_shot (attempt 2/3)
+[06:53:47]   sddb_zero_shot | stderr: ['  File "/home/abrar/Desktop/AI RPM Papers/Cardiac Arrest Detection/scripts/sddb_utils.py", line 13, in <module>', '    import wfdb', "ModuleNotFoundError: No module named 'wfdb'"]
+[06:53:47] [fail] sddb_zero_shot attempt 2 failed; retrying in 120s
+[06:53:56] phase_a_runner start (dry-run=False, done=['embedding', 'train_fean', 'train_ablations', 'notebook', 'test_fusion', 'test_fean_v2', 'robustness'])
+[06:53:56] phase_a_runner start (dry-run=False, done=['embedding', 'train_fean', 'train_ablations', 'notebook', 'test_fusion', 'test_fean_v2', 'robustness'])
+[06:53:56] [skip] train_fean already done
+[06:53:56] [skip] train_fean already done
+[06:53:56] [skip] train_ablations already done
+[06:53:56] [skip] train_ablations already done
+[06:53:56] [skip] notebook already done
+[06:53:56] [skip] notebook already done
+[06:53:56] [skip] test_fusion already done
+[06:53:56] [skip] test_fusion already done
+[06:53:56] [skip] test_fean_v2 already done
+[06:53:56] [skip] test_fean_v2 already done
+[06:53:56] [skip] robustness already done
+[06:53:56] [skip] robustness already done
+[06:53:56] [start] sddb_zero_shot (attempt 1/3)
+[06:53:56] [start] sddb_zero_shot (attempt 1/3)
+[06:54:25]   sddb_zero_shot |   24h: AUROC 0.713 | AUPRC 0.993 (degenerate: no negatives on SDDB)
+[06:54:25]   sddb_zero_shot |   24h: AUROC 0.713 | AUPRC 0.993 (degenerate: no negatives on SDDB)
+[06:54:25]   sddb_zero_shot | 
+[06:54:25]   sddb_zero_shot | 
+[06:54:25]   sddb_zero_shot | zero-shot row updated in /home/abrar/Desktop/AI RPM Papers/Cardiac Arrest Detection/outputs/sddb_v2_metrics.json (all other blocks preserved)
+[06:54:25]   sddb_zero_shot | zero-shot row updated in /home/abrar/Desktop/AI RPM Papers/Cardiac Arrest Detection/outputs/sddb_v2_metrics.json (all other blocks preserved)
+[06:54:25] [done] sddb_zero_shot in 29s
+[06:54:25] [done] sddb_zero_shot in 29s
+[06:54:25] PHASE A COMPLETE: all milestones done.
+[06:54:25] PHASE A COMPLETE: all milestones done.
+[06:54:25] next manual step: refresh manuscript tables (TODO(PHASE-A) markers in ../MDPI_Hybrid_Revision/main.tex)
+[06:54:25] next manual step: refresh manuscript tables (TODO(PHASE-A) markers in ../MDPI_Hybrid_Revision/main.tex)

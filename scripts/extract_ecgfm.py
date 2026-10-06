@@ -24,8 +24,10 @@ def main():
     ap.add_argument("--batch-size", type=int, default=8)
     args = ap.parse_args()
 
-    x = np.load(args.input)["ecg"].astype(np.float32)
+    z = np.load(args.input, mmap_mode="r")   # mmap: segments stay in page cache, not anon RAM
+    x = z["ecg"]
     assert x.ndim == 3 and x.shape[1] == 12, f"expected (n, 12, 2500), got {x.shape}"
+    assert x.dtype == np.float32, f"expected float32 segments, got {x.dtype}"
 
     model = build_model_from_checkpoint(checkpoint_path=args.checkpoint)
     model.eval()
@@ -33,7 +35,7 @@ def main():
     embs = []
     with torch.no_grad():
         for i in range(0, len(x), args.batch_size):
-            src = torch.from_numpy(x[i:i + args.batch_size])
+            src = torch.from_numpy(x[i:i + args.batch_size].copy())   # mmap is read-only; copy per batch
             # features_only path: clean encoder output, no pretraining head
             res = model.extract_features(src, None)      # mask=False
             h = res["x"]                                 # (B, T, 768) batch-first

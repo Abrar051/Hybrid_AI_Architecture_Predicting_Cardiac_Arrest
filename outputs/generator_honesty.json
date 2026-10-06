@@ -1,0 +1,35 @@
+{
+ "drift_h": 6.0,
+ "n_case_patients": 122,
+ "n_ctrl_patients": 118,
+ "n_case_windows_pre_drift": 46048,
+ "n_ctrl_windows": 82209,
+ "tests": {
+  "hr": {
+   "case_patient_mean": 78.42696718881898,
+   "ctrl_patient_mean": 78.17214394022866,
+   "ks_p": 0.6059971867764766,
+   "welch_p": 0.7415075574673022
+  },
+  "sbp": {
+   "case_patient_mean": 126.23265071828779,
+   "ctrl_patient_mean": 124.62328126669478,
+   "ks_p": 0.030859737625471784,
+   "welch_p": 0.11973515395226077
+  },
+  "dbp": {
+   "case_patient_mean": 76.24422450341456,
+   "ctrl_patient_mean": 76.5084921902886,
+   "ks_p": 0.34555789627988065,
+   "welch_p": 0.7443931517389002
+  },
+  "spo2": {
+   "case_patient_mean": 97.44032852169249,
+   "ctrl_patient_mean": 97.61398584115683,
+   "ks_p": 0.6759497975580949,
+   "welch_p": 0.17829300427770153
+  }
+ },
+ "n_tests": 8,
+ "alpha_adj": 0.00625
+}

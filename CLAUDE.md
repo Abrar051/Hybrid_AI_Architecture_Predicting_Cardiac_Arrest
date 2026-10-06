@@ -28,6 +28,53 @@ Research prototype for short-horizon (1/6/24 h) cardiac-arrest early warning fro
 
 ## Status / next steps
 
+### ROUND-2 REVIEW REVISION — IN FLIGHT (state as of 2026-10-02, end of session)
+Journal reviewer letter for the submitted Hybrid-AI paper: `REVIEWER_LETTER_ROUND2.md`
+(verbatim), verification + plan: `REVIEWER_CHECK.md`. The reviewed paper's source is
+**NOT** `manuscript/` (old version) — it is the extract of `../MDPI_Submission.zip` →
+**`../MDPI_Hybrid_Revision/main.tex`** (revision workspace, outside git).
+
+- [x] Writing fixes applied in `MDPI_Hybrid_Revision/main.tex` (points 5, 6, 8, 9, 10 +
+      parts of 1, 2): abstract de-headlined, agent terminology defined, LLM explanation
+      removed, Telegram prototype-only, setting stated, multiplier removed, evidence
+      record defined, citations added/fixed ([30]→Ding C, ICLR versions), hyphens
+      restored, British spelling, Figs 12/13 dropped, back-matter added. Compiles clean.
+- [x] **Phase A rebuild (points 2+3) COMPLETE (2026-10-06 06:54)**: 240-patient
+      cohort, all 27 embedding groups, 3-seed FEAN (val 6 h 0.949/0.944/0.937),
+      ablations, notebook executed (Pipeline.ipynb refreshed), fusion + fean tests,
+      robustness (48-patient test set, patient-bootstrap CIs), SDDB zero-shot with
+      ews_v2 models (1 h 0.571 / 6 h 0.441). Two bugs fixed during the run:
+      config `ALERT.horizon_h`→`alert_horizon`; test_fean_v2 identity codes now
+      factorized per subset. Manuscript refreshed: synthetic subsection rewritten
+      (Tables baselines/test/alerts/ablation + fusion text + figures 02-04),
+      robustness table + text (CIs on 48 patients), SDDB zero-shot row; compiles
+      clean (0 errors, 30 pages) in ../MDPI_Hybrid_Revision/. Headline (test set,
+      seed 42): 6 h AUROC 0.861 [0.838, 0.884]; 24 h 0.534 [0.490, 0.580]
+      (chance); 6 h Brier 0.136 vs 0.069 constant (calibration caveat kept).
+      Key numbers: outputs/metrics.json + robustness_metrics.json +
+      fusion_metrics.json + sddb_v2_metrics.json; runner state
+      cache/phase_a_state.json. Runner script: scripts/phase_a_runner.py
+      (resumable, retries, relaunches dead embedding tags).
+- [x] **Phase B (point 1) DONE (2026-10-06)**: `scripts/rule_branch.py` implements
+      the paper's Section 3.9/3.10 — generator extended ADDITIVELY with RR/temp/
+      ACVPU/PPG-RR (cache/rule_channels.parquet, RULE_SEED 1007; Phase A artifacts
+      bit-identical, no re-embedding), honesty check on the new channels (clean),
+      NEWS2 + 6-component S_rule, 4 trigger rules with 180 s cooldowns, Algorithm 8
+      hybrid replay over the 48 test patients. Results (outputs/rule_branch_metrics.json):
+      learned 755 alerts/136 true (reproduces Phase A exactly), rule 29/29 (PPV 1.00,
+      leads 1.2-3.0 h — later than learned 3.0-5.9 h), hybrid 782/163 (PPV 0.21);
+      burden dominated by the learned branch. Manuscript: new Section "Rule branch
+      and hybrid replay" + Table tab:hybrid, 3.10 burden sentence now cites the
+      replay, intro/summary updated. Compiles clean (31 pages).
+- [ ] Phase C: SDDB upgrades (point 4): denominators, held-out-window identity probe
+      with majority-class chance, LR/GBM baselines, inversion explanation, 5-min HRV
+      (ESC/NASPE) → SDDB feature + CV re-run.
+- [ ] Response letter (point-by-point) — SEPARATE DOCUMENT (not part of main.tex),
+      skeleton to be drafted, numbers filled from Phase A/B/C results.
+- [~] MDPI template conversion — NOT REQUIRED (user decision 2026-10-06).
+- [ ] MIMIC-III credentialed evaluation — still impossible without access (project
+      memory: no-mimic-access); letter must state this plainly.
+
 - [x] Sections 0–10 implemented and validated end-to-end in `Pipeline.ipynb` (34 cells, all pass on synthetic data; full execution ~15 min on CPU, everything cached):
   - S0 config/env · S1 synthetic cohort · S2 labels · S3 preprocessing · S4 engineered features (HRV, ectopy, BP stats, per-beat PPG-foot PTT — corr 0.98 with ground truth) · S5 baselines (LR, GBM, MEWS) · S6 ECG-FM/PaPaGei embeddings (subprocess envs) · S7 FEAN temporal model · S8 full evaluation (bootstrap CIs, calibration, lead-time bins, failure tables) + ablations · S10 export
 - [x] SDDB real-data stress test v1 (`scripts/analyze_sddb.py`): 20 records, 1829 windows, zero-shot + 5-fold grouped CV → honest negative result (zero-shot AUROC ~0.52; CV 6 h AUROC 0.39, below chance). Manuscript + journal summary written (`manuscript/main.tex`, `JOURNAL_SUMMARY.md`).

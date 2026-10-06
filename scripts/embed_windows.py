@@ -13,6 +13,7 @@ Outputs (skipped if already present): cache/embeddings/{tag}_window_ecgfm.npy
 (W, 768), {tag}_window_papagei.npy (W, 512), {tag}_meta.csv (row order matches).
 """
 import argparse
+import gc
 import os
 import subprocess
 import sys
@@ -70,6 +71,10 @@ def run_extractor(env_key, script, extra):
     cmd = [str(ENV_PY[env_key]), str(PROJECT / script)] + extra
     env = os.environ.copy()
     env["PYTHONNOUSERSITE"] = "1"   # keep ~/.local packages from shadowing env packages
+    # cap BLAS/torch threads so parallel embed jobs do not oversubscribe the CPU
+    env["OMP_NUM_THREADS"] = "4"
+    env["MKL_NUM_THREADS"] = "4"
+    env["OPENBLAS_NUM_THREADS"] = "4"
     print(f"$ {Path(cmd[1]).name} {' '.join(extra[:2])} ...")
     res = subprocess.run(cmd, capture_output=True, text=True, env=env, timeout=7200)
     if res.returncode != 0:
@@ -108,19 +113,32 @@ def main():
     print(f"[{args.tag}] {len(df)} windows")
 
     for kind in ("ecg", "ppg"):
-        segs, win_idx = build_segments(df, kind)
         seg_in = emb_dir / f"{args.tag}_{kind}_seg.npz"
-        np.savez(seg_in, win_idx=win_idx, **{kind: segs})   # extractors read key 'ecg'/'ppg'
-        print(f"[{args.tag}] {kind} segments: {segs.shape}")
         seg_out = emb_dir / f"{args.tag}_{kind}_emb.npy"
-        if kind == "ecg":
-            run_extractor("ecg", "scripts/extract_ecgfm.py",
-                          ["--input", str(seg_in), "--output", str(seg_out),
-                           "--checkpoint", str(WEIGHTS["ecg"]), "--batch-size", "16"])
+        if seg_out.exists() and seg_in.exists():
+            # chunk embeddings already extracted (the expensive step): reuse
+            # them; win_idx comes from the segment archive
+            z = np.load(seg_in)
+            win_idx = z["win_idx"]
+            z.close()
+            print(f"[{args.tag}] {kind} chunk embeddings cached, reusing")
         else:
-            run_extractor("ppg", "scripts/extract_papagei.py",
-                          ["--input", str(seg_in), "--output", str(seg_out),
-                           "--weights", str(WEIGHTS["ppg"]), "--batch-size", "32"])
+            segs, win_idx = build_segments(df, kind)
+            np.savez(seg_in, win_idx=win_idx, **{kind: segs})   # extractors read key 'ecg'/'ppg'
+            print(f"[{args.tag}] {kind} segments: {segs.shape}")
+            # release the parent's copy before the extractor subprocess loads its
+            # own (parallel jobs otherwise double the segment memory per group);
+            # win_idx is tiny (~100 KB) and still needed for pooling below
+            del segs
+            gc.collect()
+            if kind == "ecg":
+                run_extractor("ecg", "scripts/extract_ecgfm.py",
+                              ["--input", str(seg_in), "--output", str(seg_out),
+                               "--checkpoint", str(WEIGHTS["ecg"]), "--batch-size", "16"])
+            else:
+                run_extractor("ppg", "scripts/extract_papagei.py",
+                              ["--input", str(seg_in), "--output", str(seg_out),
+                               "--weights", str(WEIGHTS["ppg"]), "--batch-size", "32"])
         seg_emb = np.load(seg_out)
         pooled = pool_to_windows(seg_emb, win_idx, len(df))
         np.save(out_ecg if kind == "ecg" else out_ppg, pooled)

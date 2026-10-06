@@ -39,8 +39,10 @@ def main():
     ap.add_argument("--batch-size", type=int, default=32)
     args = ap.parse_args()
 
-    x = np.load(args.input)["ppg"].astype(np.float32)
+    z = np.load(args.input, mmap_mode="r")   # mmap: segments stay in page cache, not anon RAM
+    x = z["ppg"]
     assert x.ndim == 2 and x.shape[1] == 1250, f"expected (n, 1250), got {x.shape}"
+    assert x.dtype == np.float32, f"expected float32 segments, got {x.dtype}"
 
     model = ResNet1DMoE(in_channels=1, base_filters=32, kernel_size=3, stride=2,
                         groups=1, n_block=18, n_classes=512, n_experts=3)
@@ -50,7 +52,7 @@ def main():
     embs = []
     with torch.inference_mode():
         for i in range(0, len(x), args.batch_size):
-            src = torch.from_numpy(x[i:i + args.batch_size]).unsqueeze(1)
+            src = torch.from_numpy(x[i:i + args.batch_size].copy()).unsqueeze(1)   # mmap is read-only
             outputs = model(src)
             if isinstance(outputs, tuple):
                 outputs = outputs[0]          # (embeddings, experts, gating)

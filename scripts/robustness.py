@@ -1,26 +1,13 @@
 """Robustness evaluation (reviewer point): noisy signals, missing PPG, ECG
 artifacts, delayed measurements, sensor failure.
 
-Evaluated on the synthetic replay set (2 held out patients, step=1 windows)
-with three models trained on the synthetic cohort (cached):
-  concat - v1 architecture (legacy zero fill for missing streams)
-  gate   - gated fusion with per modality presence masks
-  weight - static modality weights with masks
-The mask aware models were trained with 10% of windows' PPG masked, so their
-missing stream handling is exercised (concat never saw missing PPG in
-training).
-
-Perturbations:
-  waveform level (re embedded through the real encoders):
-    ECG noise at SNR 20/10/5 dB, baseline wander, 50 Hz mains, flatline
-    segments, saturation, PPG noise at SNR 5 dB
-  feature level (replay windows):
-    vitals noise (0.5/1/2 x per column std), missing PPG, delayed
-    measurements (whole vector shifted 1/2/3 windows = 5/10/15 min),
-    sensor failure (PPG drops mid stay)
-
-Honest caveat (plan rule 8): 2 replay patients -> point estimates, no
-bootstrap; a pipeline demonstration, not clinical evidence.
+Rebuild (240-patient cohort): models trained on the dev-train split
+(cache/models/robustness_v2), evaluated on the held-out TEST set (48
+patients, step=1 windows). Feature-level perturbations + clean carry
+patient-bootstrap CIs (valid at 48 patients); waveform-level perturbations
+re-embed 200 sampled windows through the real encoders and stay point
+estimates (stated in the disclaimer). Waveform segments are regenerated
+deterministically via synth_signals.cut_segment (no npz dependency).
 
 Usage: python scripts/robustness.py [--skip-embed] [--epochs 15]
 """
@@ -39,56 +26,31 @@ from sklearn.metrics import roc_auc_score
 PROJECT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT / "scripts"))
 
-from ews_risk import FEAN, ENG_COLS, SEQ_LEN, build_features_masked, train_fean  # noqa: E402
-from test_fean_v2 import load_synthetic  # noqa: E402
-from test_fusion import make_sequences_masked  # noqa: E402
+from ews_risk import FEAN, train_fean  # noqa: E402
+from eval_utils import (load_manifest_features, load_splits,  # noqa: E402
+                        make_sequences, make_sequences_memmap,
+                        patient_bootstrap)
+from embed_windows import build_segments  # noqa: E402
 from synth_signals import zscore_segments  # noqa: E402
 
 EMBED_DIR = PROJECT / "cache/embeddings"
-MODEL_DIR = PROJECT / "cache/models/robustness"
+MODEL_DIR = PROJECT / "cache/models/robustness_v2"
 OUTPUT_DIR = PROJECT / "outputs"
 MODEL_DIR.mkdir(parents=True, exist_ok=True)
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 HORIZONS = (1, 6, 24)
 SEED = 7
-ECG_DIM, PPG_DIM = 768, 512
-N_WAVEFORM_WINDOWS = 200          # subset re embedded for waveform tags
+PPG_DIM = 512
+N_WAVEFORM_WINDOWS = 200          # subset re-embedded for waveform tags
 
 
-def load_replay():
-    meta = pd.read_csv(EMBED_DIR / "replay_meta.csv")
-    eng = pd.read_parquet(EMBED_DIR / "replay_engineered.parquet")
-    ecg = np.load(EMBED_DIR / "replay_window_ecgfm.npy")
-    ppg = np.load(EMBED_DIR / "replay_window_papagei.npy")
-    assert len(meta) == len(ecg) == len(ppg)
-    vt = meta.sort_values(["patient_id", "t_start_h"])
-    vt["hr_trend"] = vt.groupby("patient_id")["hr"].transform(lambda s: s.diff(6))
-    vt["sbp_trend"] = vt.groupby("patient_id")["sbp"].transform(lambda s: s.diff(6))
-    trend_map = vt.set_index(["patient_id", "t_start_h"])[["hr_trend", "sbp_trend"]]
-    eng = (eng.merge(meta[["patient_id", "t_start_h"]], on=["patient_id", "t_start_h"],
-                     how="right", validate="1:1")
-              .set_index(["patient_id", "t_start_h"]).join(trend_map, how="left")
-              .loc[list(zip(meta["patient_id"], meta["t_start_h"]))])
-    feats = np.stack([build_features_masked(meta.iloc[i],
-                                            eng[ENG_COLS].iloc[i].astype(float),
-                                            ecg[i], ppg[i])[0]
-                      for i in range(len(meta))]).astype(np.float32)
-    masks = np.ones((len(meta), 4), np.float32)
-    tte = (meta["arrest_h"] - meta["t_end_h"]).to_numpy()
-    labels = {H: np.where(np.isnan(tte), 0, ((tte > 0) & (tte <= H)).astype(int))
-              for H in HORIZONS}
-    ids = pd.factorize(meta["patient_id"])[0]
-    return meta, feats, masks, labels, tte, ids
+# ---------- model training (dev-train split, cached) ------------------------
 
-
-def train_models(epochs):
-    """Train concat/gate/weight on the synthetic cohort (cached)."""
-    meta, feats, labels, tte, ids = load_synthetic()
-    masks = np.ones((len(meta), 4), np.float32)
-    case_pids = sorted(set(meta.loc[meta["is_case"], "patient_id"]))
-    ctrl_pids = sorted(set(meta.loc[~meta["is_case"], "patient_id"]))
-    val_pids = {case_pids[-1], ctrl_pids[-1]}
-    tr = ~meta.patient_id.isin(val_pids).to_numpy()
+def train_models(epochs, batch_size):
+    """Train concat/gate/weight on the dev-train subset (cached)."""
+    meta, feats, masks, labels, tte, ids = load_manifest_features("dev")
+    splits = load_splits()
+    tr = meta.patient_id.isin(set(splits["train"])).to_numpy()
     rs = np.random.default_rng(SEED)
     missing = np.zeros(len(meta), bool)
     missing[np.where(tr)[0][rs.choice(int(tr.sum()), int(0.1 * tr.sum()),
@@ -97,9 +59,9 @@ def train_models(epochs):
     z[missing, -PPG_DIM:] = 0.0
     masks_tr = masks.copy()
     masks_tr[missing, 3] = 0.0
-    Xtr, Ltr, Ytr, Ttr, idtr, Mtr = make_sequences_masked(
+    Xtr, Ltr, Ytr, Ttr, Mtr = make_sequences_memmap(
         meta.loc[tr], z[tr], {H: labels[H][tr] for H in HORIZONS},
-        tte[tr], ids[tr], masks_tr[tr])
+        tte[tr], cache_f=MODEL_DIR / "seqs_train.npy", masks=masks_tr[tr])
     out = {}
     for mode in ("concat", "gate", "weight"):
         ckpt = MODEL_DIR / f"{mode}.pt"
@@ -109,10 +71,11 @@ def train_models(epochs):
             m = FEAN(fusion=mode)
             if mode == "concat":
                 m, hist = train_fean(m, Xtr, Ltr, Ytr, Ttr, epochs=epochs,
-                                     seed=SEED, verbose=0)
+                                     batch_size=batch_size, seed=SEED, verbose=0)
             else:
                 m, hist = train_fean(m, Xtr, Ltr, Ytr, Ttr, masks_tr=Mtr,
-                                     epochs=epochs, seed=SEED, verbose=0)
+                                     epochs=epochs, batch_size=batch_size,
+                                     seed=SEED, verbose=0)
             assert np.isfinite(hist[-1]["train_loss"])
             torch.save({"model": m.state_dict()}, ckpt)
             np.savez(stats, mean=feats[tr].mean(0), std=feats[tr].std(0))
@@ -120,30 +83,68 @@ def train_models(epochs):
     return out
 
 
-def predict(mode, feats, masks, labels, tte, meta, ckpt, stats):
-    """6 h / 1 h AUROC on the replay set for one model."""
-    st = np.load(stats)
-    z = (feats - st["mean"]) / (st["std"] + 1e-8)
-    X, L, Y, T, ID, M = make_sequences_masked(meta, z, labels, tte, ids_replay,
-                                              masks, step=1)
+# ---------- per-patient streaming prediction --------------------------------
+
+def _load_model(mode, ckpt):
     m = FEAN(fusion=mode)
     m.load_state_dict(torch.load(ckpt, map_location="cpu")["model"])
     m.eval()
-    with torch.no_grad():
-        out = m(torch.from_numpy(X), torch.from_numpy(L),
-                mask=None if mode == "concat" else torch.from_numpy(M))
-    return {H: roc_auc_score(Y[H], torch.sigmoid(out["risk"][H]).numpy())
-            for H in HORIZONS if Y[H].sum() > 0 and (Y[H] == 0).sum() > 0}
+    return m
 
 
-def embed_ecg_tag(tag, chunk_ids, chunks):
-    """Re embed perturbed ECG chunks via ecgfm_env (cached by tag)."""
+def predict(mode, feats, masks, labels, tte, meta, ckpt, stats,
+            horizons=(1, 6, 24)):
+    """Stream predictions per patient (RAM-safe) and return
+    {H: (y, p, patient_codes)} for finite labels."""
+    st = np.load(stats)
+    z = (feats - st["mean"]) / (st["std"] + 1e-8)
+    m = _load_model(mode, ckpt)
+    ys = {H: [] for H in horizons}
+    ps = {H: [] for H in horizons}
+    pats = []
+    for pid, g in meta.groupby("patient_id"):
+        idx = g.index.to_numpy()
+        X, L, Y, T, M = make_sequences(meta.loc[idx], z[idx],
+                                       {H: labels[H][idx] for H in horizons},
+                                       tte[idx], step=1, masks=masks[idx])
+        with torch.no_grad():
+            out = m(torch.from_numpy(X), torch.from_numpy(L),
+                    mask=None if mode == "concat" else torch.from_numpy(M))
+        for H in horizons:
+            fin = np.isfinite(Y[H])
+            ys[H].append(Y[H][fin])
+            ps[H].append(torch.sigmoid(out["risk"][H]).numpy()[fin])
+            if H == horizons[0]:
+                pats.append(np.repeat(int(pid), int(fin.sum())))
+    out = {}
+    for H in horizons:
+        y = np.concatenate(ys[H])
+        p = np.concatenate(ps[H])
+        pa = np.concatenate(pats)
+        assert y.sum() > 0 and (y == 0).sum() > 0, f"single class at {H}h"
+        out[H] = (y, p, pa)
+    return out
+
+
+def auc_with_ci(y, p, pa, n_iter=1000):
+    point, lo, hi, nv = patient_bootstrap(roc_auc_score, y, p, pa,
+                                          n_iter=n_iter, seed=SEED)
+    return {"auc": point, "ci_lo": lo, "ci_hi": hi, "n_valid_draws": nv}
+
+
+# ---------- waveform re-embedding -------------------------------------------
+
+def embed_ecg_tag(tag, chunks):
+    """Re-embed perturbed ECG chunks via ecgfm_env (cached by tag). Chunks are
+    re-z-scored as in the original protocol (the perturbation is applied to
+    the z-scored clean segments, then standardized again)."""
     emb_out = EMBED_DIR / f"rob_{tag}_ecg.npy"
     if not emb_out.exists():
         seg_in = EMBED_DIR / f"rob_{tag}_ecg.npz"
         np.savez(seg_in, ecg=zscore_segments(chunks))
         env = os.environ.copy()
         env["PYTHONNOUSERSITE"] = "1"
+        env["OMP_NUM_THREADS"] = "4"
         subprocess.run(
             [str(Path.home() / "anaconda3/envs/ecgfm_env/bin/python"),
              str(PROJECT / "scripts/extract_ecgfm.py"),
@@ -151,6 +152,7 @@ def embed_ecg_tag(tag, chunk_ids, chunks):
              "--checkpoint", str(PROJECT / "weights/mimic_iv_ecg_physionet_pretrained.pt"),
              "--batch-size", "16"],
             check=True, capture_output=True, text=True, env=env, timeout=7200)
+        (EMBED_DIR / f"rob_{tag}_ecg.npz").unlink(missing_ok=True)
     return np.load(emb_out)                          # (n_chunks, 768)
 
 
@@ -162,6 +164,7 @@ def embed_ppg_tag(tag, segments):
         np.savez(seg_in, ppg=zs.astype(np.float32))
         env = os.environ.copy()
         env["PYTHONNOUSERSITE"] = "1"
+        env["OMP_NUM_THREADS"] = "4"
         subprocess.run(
             [str(Path.home() / "anaconda3/envs/papagei_env/bin/python"),
              str(PROJECT / "scripts/extract_papagei.py"),
@@ -169,42 +172,51 @@ def embed_ppg_tag(tag, segments):
              "--weights", str(PROJECT / "weights/papagei_s.pt"),
              "--batch-size", "32"],
             check=True, capture_output=True, text=True, env=env, timeout=7200)
+        (EMBED_DIR / f"rob_{tag}_ppg.npz").unlink(missing_ok=True)
     return np.load(emb_out)                          # (n_chunks, 512)
 
+
+# ---------- main -------------------------------------------------------------
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--skip-embed", action="store_true")
     ap.add_argument("--epochs", type=int, default=15)
+    ap.add_argument("--batch-size", type=int, default=256)
     args = ap.parse_args()
 
-    print("loading synthetic replay set...")
-    global ids_replay
-    meta, feats, masks, labels, tte, ids_replay = load_replay()
+    print("loading synthetic test set...")
+    meta, feats, masks, labels, tte, ids = load_manifest_features("test")
     n = len(meta)
-    print(f"replay windows {n}, patients {meta.patient_id.unique()}")
+    n_patients = meta.patient_id.nunique()
+    print(f"test windows {n}, patients {n_patients}")
 
     print("training (or loading cached) concat/gate/weight...")
-    models = train_models(args.epochs)
+    models = train_models(args.epochs, args.batch_size)
     print(f"  loaded: {list(models)}")
 
     results = {"clean": {}, "perturbations": {}}
     for mode, (ckpt, stats) in models.items():
-        results["clean"][mode] = predict(mode, feats, masks, labels, tte, meta,
-                                         ckpt, stats)
-        print(f"  clean {mode}: {results['clean'][mode]}")
+        pred = predict(mode, feats, masks, labels, tte, meta, ckpt, stats)
+        results["clean"][mode] = {str(H): auc_with_ci(*pred[H])
+                                  for H in (1, 6, 24)}
+        print(f"  clean {mode}: "
+              f"{ {H: round(results['clean'][mode][str(H)]['auc'], 3) for H in (1, 6, 24)} }")
 
-    # ---------- feature level perturbations ---------------------------------
+    def feature_perturbation(tag, f, m):
+        results["perturbations"].setdefault(tag, {})
+        for mode, (ckpt, stats) in models.items():
+            pred = predict(mode, f, m, labels, tte, meta, ckpt, stats,
+                           horizons=(6,))
+            results["perturbations"][tag][mode] = auc_with_ci(*pred[6])
+        print(f"  {tag} done")
+
     # P2 missing PPG
-    for mode, (ckpt, stats) in models.items():
-        f = feats.copy()
-        f[:, -PPG_DIM:] = 0.0
-        m = masks.copy()
-        m[:, 3] = 0.0
-        results["perturbations"].setdefault("missing_ppg", {})[mode] = \
-            predict(mode, f, m, labels, tte, meta, ckpt, stats)
-        print(f"  missing_ppg {mode}: "
-              f"{results['perturbations']['missing_ppg'][mode]}")
+    f = feats.copy()
+    f[:, -PPG_DIM:] = 0.0
+    m = masks.copy()
+    m[:, 3] = 0.0
+    feature_perturbation("missing_ppg", f, m)
 
     # P3 delayed measurements (whole vector shifted k windows)
     for k in (1, 2, 3):
@@ -212,11 +224,7 @@ def main():
         for pid in np.unique(meta["patient_id"]):
             idx = np.where(meta["patient_id"] == pid)[0]
             f[idx[k:]] = feats[idx[:-k]]
-        results["perturbations"].setdefault(f"delay_{5 * k}min", {})
-        for mode, (ckpt, stats) in models.items():
-            results["perturbations"][f"delay_{5 * k}min"][mode] = \
-                predict(mode, f, masks, labels, tte, meta, ckpt, stats)
-        print(f"  delay {5 * k} min done")
+        feature_perturbation(f"delay_{5 * k}min", f, masks)
 
     # P4 sensor failure: PPG dies 2 h before the case arrest, at 10 h for control
     f = feats.copy()
@@ -228,12 +236,7 @@ def main():
         drop = idx[meta.loc[idx, "t_start_h"] >= cutoff]
         f[drop, -PPG_DIM:] = 0.0
         m[drop, 3] = 0.0
-    results["perturbations"]["sensor_failure"] = {}
-    for mode, (ckpt, stats) in models.items():
-        results["perturbations"]["sensor_failure"][mode] = \
-            predict(mode, f, m, labels, tte, meta, ckpt, stats)
-        print(f"  sensor_failure {mode}: "
-              f"{results['perturbations']['sensor_failure'][mode]}")
+    feature_perturbation("sensor_failure", f, m)
 
     # P1 vitals noise (0.5/1/2 x per column std)
     for k in (0.5, 1.0, 2.0):
@@ -241,35 +244,32 @@ def main():
         f = feats.copy()
         f[:, :7] += k * feats[:, :7].std(0) * rs.standard_normal((n, 7)).astype(
             np.float32)
-        results["perturbations"].setdefault(f"vitals_noise_{k}x", {})
-        for mode, (ckpt, stats) in models.items():
-            results["perturbations"][f"vitals_noise_{k}x"][mode] = \
-                predict(mode, f, masks, labels, tte, meta, ckpt, stats)
-        print(f"  vitals noise {k}x done")
+        feature_perturbation(f"vitals_noise_{k}x", f, masks)
 
-    # ---------- waveform level perturbations (re embedded) --------------------
+    # ---------- waveform level perturbations (re-embedded) -------------------
     if not args.skip_embed:
-        ecg_segs = np.load(EMBED_DIR / "replay_ecg_seg.npz")["ecg"]   # (n*6, 12, 2500)
-        ppg_segs = np.load(EMBED_DIR / "replay_ppg_seg.npz")["ppg"]   # (n*3, 1250)
         rs = np.random.default_rng(SEED)
         win_idx = rs.choice(n, N_WAVEFORM_WINDOWS, replace=False)
-        ecg_ids = np.concatenate([np.arange(w * 6, w * 6 + 6) for w in win_idx])
-        ppg_ids = np.concatenate([np.arange(w * 3, w * 3 + 3) for w in win_idx])
+        sub_meta = meta.iloc[win_idx].reset_index(drop=True)
+        ecg_sub, _ = build_segments(sub_meta, "ecg")   # (200*6, 12, 2500)
+        ppg_sub, _ = build_segments(sub_meta, "ppg")   # (200*3, 1250)
 
         def replace_ecg_block(tag, chunks):
-            emb = embed_ecg_tag(tag, ecg_ids, chunks)
+            emb = embed_ecg_tag(tag, chunks)
             f = feats.copy()
-            f[win_idx, 17:17 + ECG_DIM] = emb.reshape(len(win_idx), 6, ECG_DIM).mean(1)
+            f[win_idx, 17:17 + 768] = emb.reshape(len(win_idx), 6, 768).mean(1)
             results["perturbations"].setdefault(tag, {})
             for mode, (ckpt, stats) in models.items():
-                results["perturbations"][tag][mode] = \
-                    predict(mode, f, masks, labels, tte, meta, ckpt, stats)
-            summary = {mm: results["perturbations"][tag][mm][6]
+                pred = predict(mode, f, masks, labels, tte, meta, ckpt, stats,
+                               horizons=(6,))
+                results["perturbations"][tag][mode] = {"auc": float(
+                    roc_auc_score(*pred[6][:2])),
+                    "ci_lo": None, "ci_hi": None}
+            summary = {mm: round(results["perturbations"][tag][mm]["auc"], 3)
                        for mm in models}
-            print(f"  {tag} done: "
-                  + ", ".join(f"{mm}: {summary[mm]:.3f}" for mm in summary))
+            print(f"  {tag} done: {summary}")
 
-        base = ecg_segs[ecg_ids].copy()
+        base = ecg_sub.copy()
         p2p = (base ** 2).mean(-1, keepdims=True)
 
         for snr in (20, 10, 5):
@@ -294,18 +294,22 @@ def main():
         sat = np.clip(base, -0.5 * base.max(), 0.5 * base.max())
         replace_ecg_block("ecg_saturation", sat)
 
-        ppg_base = ppg_segs[ppg_ids].copy()
+        ppg_base = ppg_sub.copy()
         p2p = (ppg_base ** 2).mean(-1, keepdims=True)
         noise = rs.standard_normal(ppg_base.shape).astype(np.float32)
-        ppg_noisy = (ppg_base + np.sqrt(p2p) / (10 ** (5 / 20)) * noise).astype(np.float32)
+        ppg_noisy = (ppg_base + np.sqrt(p2p) / (10 ** (5 / 20)) * noise).astype(
+            np.float32)
         emb = embed_ppg_tag("ppg_noise_5dB", ppg_noisy)
         f = feats.copy()
         f[win_idx, -PPG_DIM:] = emb.reshape(len(win_idx), 3, PPG_DIM).mean(1)
         results["perturbations"]["ppg_noise_5dB"] = {}
         for mode, (ckpt, stats) in models.items():
-            results["perturbations"]["ppg_noise_5dB"][mode] = \
-                predict(mode, f, masks, labels, tte, meta, ckpt, stats)
-        print(f"  ppg_noise_5dB done")
+            pred = predict(mode, f, masks, labels, tte, meta, ckpt, stats,
+                           horizons=(6,))
+            results["perturbations"]["ppg_noise_5dB"][mode] = {
+                "auc": float(roc_auc_score(*pred[6][:2])),
+                "ci_lo": None, "ci_hi": None}
+        print("  ppg_noise_5dB done")
 
     # merge waveform results from a previous full run when skipping embeds
     saved_path = OUTPUT_DIR / "robustness_metrics.json"
@@ -315,10 +319,14 @@ def main():
             results["perturbations"].setdefault(k, v)
 
     results["n_windows"] = n
-    results["n_replay_patients"] = 2
+    results["n_test_patients"] = n_patients
+    results["n_waveform_windows"] = N_WAVEFORM_WINDOWS
     results["seed"] = SEED
-    results["disclaimer"] = ("2 replay patients -> point estimates, no CIs; "
-                             "pipeline demonstration, not clinical evidence")
+    results["disclaimer"] = ("feature-level perturbations + clean: patient-level "
+                             "bootstrap CIs over the 48-patient test set; "
+                             "waveform tags: point estimates on 200 re-embedded "
+                             "windows. Pipeline demonstration, not clinical "
+                             "evidence.")
     (OUTPUT_DIR / "robustness_metrics.json").write_text(
         json.dumps(results, indent=1, default=str))
 
@@ -332,13 +340,13 @@ def main():
     levels = ["clean", "ecg_noise_20dB", "ecg_noise_10dB", "ecg_noise_5dB"]
     xpos = np.arange(len(levels))
     for mode in models:
-        y = [results["clean"][mode][6] if l == "clean"
-             else results["perturbations"][l][mode][6] for l in levels]
+        y = [results["clean"][mode]["6"]["auc"] if l == "clean"
+             else results["perturbations"][l][mode]["auc"] for l in levels]
         ax.plot(xpos, y, marker="o", color=colors[mode], label=mode)
     ax.set_xticks(xpos)
     ax.set_xticklabels(["clean", "SNR 20", "SNR 10", "SNR 5"], fontsize=9)
-    ax.set_ylabel("6 h AUROC (replay)")
-    ax.set_title("ECG waveform noise (synthetic replay, 2 patients)")
+    ax.set_ylabel("6 h AUROC (test)")
+    ax.set_title(f"ECG waveform noise (synthetic test set, {n_patients} patients)")
     ax.legend()
     fig.tight_layout()
     fig.savefig(OUTPUT_DIR / "fig_robustness_noise.png", dpi=150)
@@ -351,23 +359,24 @@ def main():
     xpos = np.arange(len(cats))
     w = 0.26
     for i, mode in enumerate(models):
-        y = [results["clean"][mode][6] if c == "clean"
-             else results["perturbations"][c][mode][6] for c in cats]
+        y = [results["clean"][mode]["6"]["auc"] if c == "clean"
+             else results["perturbations"][c][mode]["auc"] for c in cats]
         ax.bar(xpos + (i - 1) * w, y, w, color=colors[mode], label=mode)
-    ax.axhline(results["clean"]["concat"][6], color="#999999", linestyle=":",
-               linewidth=1)
+    ax.axhline(results["clean"]["concat"]["6"]["auc"], color="#999999",
+               linestyle=":", linewidth=1)
     ax.set_xticks(xpos)
     ax.set_xticklabels(["clean", "no PPG", "PPG dies", "15 min delay",
                         "vitals 2x", "flatline", "saturate", "wander", "mains",
                         "PPG 5 dB"], rotation=25, ha="right", fontsize=8)
-    ax.set_ylabel("6 h AUROC (replay)")
-    ax.set_title("Robustness sweep (synthetic replay, 2 patients; "
+    ax.set_ylabel("6 h AUROC (test)")
+    ax.set_title(f"Robustness sweep (synthetic test set, {n_patients} patients; "
                  "dotted line = clean concat)")
     ax.legend(fontsize=8)
     fig.tight_layout()
     fig.savefig(OUTPUT_DIR / "fig_robustness_failure.png", dpi=150)
     print(f"\nsaved -> {OUTPUT_DIR / 'robustness_metrics.json'}")
-    print("(honest caveat: 2 replay patients, point estimates only)")
+    print("(feature perturbations carry patient-bootstrap CIs; waveform tags "
+          "are 200-window point estimates)")
 
 
 if __name__ == "__main__":

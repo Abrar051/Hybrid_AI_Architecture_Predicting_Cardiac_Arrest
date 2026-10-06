@@ -1,0 +1,122 @@
+building SDDB manifest...
+skipped 36 windows with NaN gaps (digitized-tape corruption)
+windows: 1798 ({'pre': 1120, 'far': 678})
+label sums: {1: 176, 6: 1107, 24: 1781}
+(24 h labels are all-positive on SDDB: no record extends far enough before onset to supply 24 h negatives)
+modality masks: {'vitals': np.float32(1.0), 'eng': np.float32(1.0), 'ecg': np.float32(1.0), 'ppg': np.float32(0.0)}
+
+(a) zero-shot (synthetic-trained model):
+   1h: AUROC 0.544 | AUPRC 0.101
+   6h: AUROC 0.428 | AUPRC 0.547
+  24h: AUROC 0.730 | AUPRC 0.993 (degenerate: no negatives on SDDB)
+
+(b) 5-fold grouped-by-record CV: ['plain', 'adv', 'adv_pcgrad', 'gate', 'attn', 'weight']
+
+--- variant plain (15 epochs) ---
+  fold 0: test records [3, 8, 12, 13] (n=419) done | val AUC6h last epoch 0.4485564304461942
+  fold 1: test records [10, 14, 15, 16] (n=160) done | val AUC6h last epoch 1.0
+  fold 2: test records [0, 1, 6, 7] (n=384) done | val AUC6h last epoch 0.5082762241627059
+  fold 3: test records [4, 5, 18, 19] (n=367) done | val AUC6h last epoch 0.40940928531581233
+  fold 4: test records [2, 9, 11, 17] (n=468) done | val AUC6h last epoch 0.4547178495811471
+   1h: AUROC 0.673 [0.557, 0.802] | AUPRC 0.311 [0.222, 0.394]
+   6h: AUROC 0.413 [0.345, 0.470] | AUPRC 0.559 [0.491, 0.646]
+  24h: AUROC 0.841 [0.760, 0.964] | AUPRC 0.998 [0.996, 1.000]
+  time-averaged AUC across lead-time bins: 0.45158125092960527
+  identity probe acc (held-out windows): 0.000 (chance majority-class 0.356)
+
+--- variant adv (15 epochs) ---
+  fold 0: test records [3, 8, 12, 13] (n=419) done | val AUC6h last epoch 0.4350035790980673
+  fold 1: test records [10, 14, 15, 16] (n=160) done | val AUC6h last epoch 0.9937106918238994
+  fold 2: test records [0, 1, 6, 7] (n=384) done | val AUC6h last epoch 0.5812562175306731
+  fold 3: test records [4, 5, 18, 19] (n=367) done | val AUC6h last epoch 0.5300316122233931
+  fold 4: test records [2, 9, 11, 17] (n=468) done | val AUC6h last epoch 0.4585473626070146
+   1h: AUROC 0.695 [0.602, 0.802] | AUPRC 0.280 [0.210, 0.345]
+   6h: AUROC 0.442 [0.376, 0.507] | AUPRC 0.569 [0.503, 0.667]
+  24h: AUROC 0.799 [0.745, 0.889] | AUPRC 0.998 [0.996, 0.999]
+  time-averaged AUC across lead-time bins: 0.45591196014960983
+  identity probe acc (held-out windows): 0.000 (chance majority-class 0.356)
+
+--- variant adv_pcgrad (15 epochs) ---
+  fold 0: test records [3, 8, 12, 13] (n=419) done | val AUC6h last epoch 0.48086375566690526
+  fold 1: test records [10, 14, 15, 16] (n=160) done | val AUC6h last epoch 0.8679245283018868
+  fold 2: test records [0, 1, 6, 7] (n=384) done | val AUC6h last epoch 0.626160605725655
+  fold 3: test records [4, 5, 18, 19] (n=367) done | val AUC6h last epoch 0.43869708051819256
+  fold 4: test records [2, 9, 11, 17] (n=468) done | val AUC6h last epoch 0.46405228758169936
+   1h: AUROC 0.658 [0.552, 0.774] | AUPRC 0.256 [0.198, 0.319]
+   6h: AUROC 0.504 [0.443, 0.568] | AUPRC 0.608 [0.542, 0.696]
+  24h: AUROC 0.688 [0.566, 0.886] | AUPRC 0.994 [0.990, 0.999]
+  time-averaged AUC across lead-time bins: 0.46711625374607446
+  identity probe acc (held-out windows): 0.000 (chance majority-class 0.356)
+
+--- variant gate (15 epochs) ---
+  fold 0: test records [3, 8, 12, 13] (n=419) done | val AUC6h last epoch 0.38709138630398476
+  fold 1: test records [10, 14, 15, 16] (n=160) done | val AUC6h last epoch 0.0
+  fold 2: test records [0, 1, 6, 7] (n=384) done | val AUC6h last epoch 0.4992400795843926
+  fold 3: test records [4, 5, 18, 19] (n=367) done | val AUC6h last epoch 0.4218062356660262
+  fold 4: test records [2, 9, 11, 17] (n=468) done | val AUC6h last epoch 0.4549571941452637
+   1h: AUROC 0.654 [0.533, 0.769] | AUPRC 0.250 [0.192, 0.306]
+   6h: AUROC 0.408 [0.365, 0.445] | AUPRC 0.548 [0.491, 0.624]
+  24h: AUROC 0.821 [0.757, 0.952] | AUPRC 0.997 [0.995, 1.000]
+  time-averaged AUC across lead-time bins: 0.4588065470084383
+  identity probe acc (held-out windows): 0.000 (chance majority-class 0.356)
+
+--- variant attn (15 epochs) ---
+  fold 0: test records [3, 8, 12, 13] (n=419) done | val AUC6h last epoch 0.4594130279169649
+  fold 1: test records [10, 14, 15, 16] (n=160) done | val AUC6h last epoch 0.07547169811320754
+  fold 2: test records [0, 1, 6, 7] (n=384) done | val AUC6h last epoch 0.5932629600972699
+  fold 3: test records [4, 5, 18, 19] (n=367) done | val AUC6h last epoch 0.5277381764086035
+  fold 4: test records [2, 9, 11, 17] (n=468) done | val AUC6h last epoch 0.49527754763877385
+   1h: AUROC 0.594 [0.486, 0.709] | AUPRC 0.253 [0.187, 0.330]
+   6h: AUROC 0.486 [0.409, 0.549] | AUPRC 0.605 [0.544, 0.687]
+  24h: AUROC 0.801 [0.746, 0.897] | AUPRC 0.997 [0.995, 0.999]
+  time-averaged AUC across lead-time bins: 0.46889601334785574
+  identity probe acc (held-out windows): 0.000 (chance majority-class 0.356)
+
+--- variant weight (15 epochs) ---
+  fold 0: test records [3, 8, 12, 13] (n=419) done | val AUC6h last epoch 0.38642328799809117
+  fold 1: test records [10, 14, 15, 16] (n=160) done | val AUC6h last epoch 0.0
+  fold 2: test records [0, 1, 6, 7] (n=384) done | val AUC6h last epoch 0.49111583950480825
+  fold 3: test records [4, 5, 18, 19] (n=367) done | val AUC6h last epoch 0.5475113122171945
+  fold 4: test records [2, 9, 11, 17] (n=468) done | val AUC6h last epoch 0.45525177207033046
+   1h: AUROC 0.655 [0.548, 0.767] | AUPRC 0.253 [0.194, 0.319]
+   6h: AUROC 0.407 [0.356, 0.454] | AUPRC 0.549 [0.493, 0.619]
+  24h: AUROC 0.811 [0.733, 0.945] | AUPRC 0.997 [0.995, 1.000]
+  time-averaged AUC across lead-time bins: 0.46483359666262986
+  identity probe acc (held-out windows): 0.000 (chance majority-class 0.356)
+
+(b2) LR / GBM baselines (engineered window features, same folds):
+  logistic            1h: AUROC 0.574 [0.487, 0.652]
+  logistic            6h: AUROC 0.476 [0.394, 0.569]
+  logistic           24h: AUROC 0.592 [0.500, 0.686]
+  gradient_boosting   1h: AUROC 0.483 [0.426, 0.544]
+  gradient_boosting   6h: AUROC 0.362 [0.306, 0.423]
+  gradient_boosting  24h: AUROC 0.545 [0.464, 0.661]
+
+(c) feature-block ablations (plain architecture, 10 epochs):
+  fold 0: test records [3, 8, 12, 13] (n=419) done | val AUC6h last epoch 0.48542114053925073
+  fold 1: test records [10, 14, 15, 16] (n=160) done | val AUC6h last epoch 1.0
+  fold 2: test records [0, 1, 6, 7] (n=384) done | val AUC6h last epoch 0.5056786780148115
+  fold 3: test records [4, 5, 18, 19] (n=367) done | val AUC6h last epoch 0.5803942230211369
+  fold 4: test records [2, 9, 11, 17] (n=468) done | val AUC6h last epoch 0.5479333517444536
+  no_emb   1h: AUROC 0.753 [0.690, 0.829]
+  no_emb   6h: AUROC 0.535 [0.486, 0.591]
+  no_emb  24h: AUROC 0.753 [0.673, 0.862]
+  fold 0: test records [3, 8, 12, 13] (n=419) done | val AUC6h last epoch 0.3618706752565021
+  fold 1: test records [10, 14, 15, 16] (n=160) done | val AUC6h last epoch 0.03773584905660377
+  fold 2: test records [0, 1, 6, 7] (n=384) done | val AUC6h last epoch 0.46359290372499173
+  fold 3: test records [4, 5, 18, 19] (n=367) done | val AUC6h last epoch 0.4959090063844295
+  fold 4: test records [2, 9, 11, 17] (n=468) done | val AUC6h last epoch 0.45672466169566417
+  no_eng   1h: AUROC 0.710 [0.618, 0.813]
+  no_eng   6h: AUROC 0.423 [0.376, 0.466]
+  no_eng  24h: AUROC 0.808 [0.734, 0.947]
+
+attention salience (last-history-position mean weight per bin):
+  plain       (0,1] 0.000 | (1,6] 0.000 | (6,24] 0.000
+  adv         (0,1] 0.000 | (1,6] 0.000 | (6,24] 0.000
+  adv_pcgrad  (0,1] 0.000 | (1,6] 0.000 | (6,24] 0.000
+  gate        (0,1] 0.000 | (1,6] 0.000 | (6,24] 0.000
+  attn        (0,1] 0.000 | (1,6] 0.000 | (6,24] 0.000
+  weight      (0,1] 0.000 | (1,6] 0.000 | (6,24] 0.000
+
+saved -> /home/abrar/Desktop/AI RPM Papers/Cardiac Arrest Detection/outputs/sddb_v2_metrics.json
+(honest caveat: Holter 1980s data, 20 patients, no PPG/ABP -> a real-data smoke test, not a clinical validation)

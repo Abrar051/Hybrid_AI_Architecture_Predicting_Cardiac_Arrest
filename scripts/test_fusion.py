@@ -16,6 +16,7 @@ per-modality missing embedding. Two mask experiments on the synthetic cohort:
 Usage: python scripts/test_fusion.py [--epochs 15]
 """
 import argparse
+import json
 import sys
 from pathlib import Path
 
@@ -27,34 +28,14 @@ from sklearn.metrics import roc_auc_score
 PROJECT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT / "scripts"))
 
-from ews_risk import FEAN, SEQ_LEN, build_features_masked, train_fean  # noqa: E402
-from test_fean_v2 import load_synthetic, make_sequences  # noqa: E402
+from ews_risk import FEAN, train_fean  # noqa: E402
+from eval_utils import (load_manifest_features, load_splits,  # noqa: E402
+                        make_sequences)
 
 HORIZONS = (1, 6, 24)
 SEED = 7
 PPG_BLOCK = 3                      # index of the PPG block in the 4-bit mask
-
-
-def make_sequences_masked(meta, feats, labels, tte, ids, masks, step=3):
-    """Like make_sequences, but sequences also carry per-window masks
-    (padded history positions get mask 0)."""
-    meta = meta.reset_index(drop=True)
-    X, L, Y, T, ID, M = [], [], [], [], [], []
-    for _, g in meta.groupby("patient_id"):
-        pos = g.index.to_numpy()
-        for j in range(0, len(pos), step):
-            lo = max(0, j - SEQ_LEN + 1)
-            n_hist = j - lo + 1
-            X.append(np.pad(feats[pos[lo:j + 1]], ((SEQ_LEN - n_hist, 0), (0, 0))))
-            M.append(np.pad(masks[pos[lo:j + 1]], ((SEQ_LEN - n_hist, 0), (0, 0))))
-            L.append(n_hist)
-            Y.append([labels[H][pos[j]] for H in HORIZONS])
-            T.append(tte[pos[j]])
-            ID.append(ids[pos[j]])
-    return (np.stack(X).astype(np.float32), np.array(L, np.int64),
-            {H: np.array([y[k] for y in Y], np.float32) for k, H in enumerate(HORIZONS)},
-            np.array(T, np.float32), np.array(ID, np.int64),
-            np.stack(M).astype(np.float32))
+OUTPUT_DIR = PROJECT / "outputs"
 
 
 def eval_auc(m, X, L, M, Y, masks_override=None):
@@ -72,16 +53,15 @@ def eval_auc(m, X, L, M, Y, masks_override=None):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--epochs", type=int, default=15)
+    ap.add_argument("--batch-size", type=int, default=256)
     args = ap.parse_args()
 
-    meta, feats, labels, tte, ids = load_synthetic()
-    masks = np.ones((len(meta), 4), np.float32)      # all blocks present
-    case_pids = sorted(set(meta.loc[meta["is_case"], "patient_id"]))
-    ctrl_pids = sorted(set(meta.loc[~meta["is_case"], "patient_id"]))
-    val_pids = {case_pids[-1], ctrl_pids[-1]}
-    tr = ~meta.patient_id.isin(val_pids).to_numpy()
-    va = ~tr
-    assert not (set(meta.loc[tr, "patient_id"]) & set(val_pids))
+    meta, feats, masks, labels, tte, ids = load_manifest_features("dev")
+    splits = load_splits()
+    tr = meta.patient_id.isin(set(splits["train"])).to_numpy()
+    va = meta.patient_id.isin(set(splits["val"])).to_numpy()
+    assert tr.any() and va.any()
+    assert not (set(meta.loc[tr, "patient_id"]) & set(splits["val"]))
     mu, sd = feats[tr].mean(0), feats[tr].std(0)
     z = (feats - mu) / (sd + 1e-8)
 
@@ -95,28 +75,31 @@ def main():
     masks_tr = masks.copy()
     masks_tr[missing_tr, PPG_BLOCK] = 0.0
 
-    Xtr, Ltr, Ytr, Ttr, idtr, Mtr = make_sequences_masked(
+    Xtr, Ltr, Ytr, Ttr, idtr, Mtr = make_sequences(
         meta.loc[tr], z_ppgoff[tr], {H: labels[H][tr] for H in HORIZONS},
-        tte[tr], ids[tr], masks_tr[tr])
-    Xva, Lva, Yva, Tva, idva, Mva = make_sequences_masked(
+        tte[tr], ids=ids[tr], masks=masks_tr[tr])
+    Xva, Lva, Yva, Tva, idva, Mva = make_sequences(
         meta.loc[va], z[va], {H: labels[H][va] for H in HORIZONS},
-        tte[va], ids[va], masks[va])
+        tte[va], ids=ids[va], masks=masks[va])
 
-    print(f"train seqs {len(Xtr)} (10% PPG-masked), val seqs {len(Xva)} | seed {SEED}")
+    print(f"train seqs {len(Xtr)} (10% PPG-masked), val seqs {len(Xva)} | "
+          f"val patients {len(splits['val'])} | seed {SEED}")
     torch.manual_seed(SEED)
 
     results = {}
     for mode in ("concat", "gate", "attn", "weight"):
-        print(f"\n=== {mode} ({args.epochs} epochs, full batch) ===")
+        print(f"\n=== {mode} ({args.epochs} epochs, batch {args.batch_size}) ===")
         m = FEAN(fusion=mode)
         if mode == "concat":
             m, hist = train_fean(m, Xtr, Ltr, Ytr, Ttr,
                                  Xva=Xva, Lva=Lva, Yva=Yva,
-                                 epochs=args.epochs, seed=SEED)
+                                 epochs=args.epochs, batch_size=args.batch_size,
+                                 seed=SEED)
         else:
             m, hist = train_fean(m, Xtr, Ltr, Ytr, Ttr, masks_tr=Mtr,
                                  Xva=Xva, Lva=Lva, Yva=Yva, masks_va=Mva,
-                                 epochs=args.epochs, seed=SEED)
+                                 epochs=args.epochs, batch_size=args.batch_size,
+                                 seed=SEED)
         assert all(np.isfinite(h["train_loss"]) for h in hist), f"NaN loss in {mode}"
         assert hist[-1]["train_loss"] < hist[0]["train_loss"], f"{mode} loss flat"
         auc_va = eval_auc(m, Xva, Lva, Mva, Yva)
@@ -135,13 +118,24 @@ def main():
         m = FEAN(fusion=mode)
         m, _ = train_fean(m, Xtr, Ltr, Ytr, Ttr, masks_tr=Mtr,
                           Xva=Xva, Lva=Lva, Yva=Yva, masks_va=Mva,
-                          epochs=args.epochs, seed=SEED, verbose=0)
+                          epochs=args.epochs, batch_size=args.batch_size,
+                          seed=SEED, verbose=0)
         auc_off = eval_auc(m, Xva_off, Lva, Mva_off, Yva)
         results[mode]["val_auc_ppg_off"] = auc_off
         print(f"  {mode:<6} " + " | ".join(f"{H}h {auc_off[H]:.3f}" for H in auc_off))
 
+    results["n_train_patients"] = len(splits["train"])
+    results["n_val_patients"] = len(splits["val"])
+    results["seed"] = SEED
+    results["epochs"] = args.epochs
+    (OUTPUT_DIR / "fusion_metrics.json").write_text(
+        json.dumps(results, indent=1, default=str))
+    print(f"\nexported -> {OUTPUT_DIR / 'fusion_metrics.json'}")
+
     print("\nSummary (val AUROC 6h):")
     for mode, r in results.items():
+        if not isinstance(r, dict) or "val_auc" not in r:
+            continue
         extra = f" | PPG-off {r['val_auc_ppg_off'][6]:.3f}" if "val_auc_ppg_off" in r else ""
         print(f"  {mode:<6} {r['val_auc'][6]:.3f}{extra} | train_loss "
               f"{r['last_train_loss']:.4f}")

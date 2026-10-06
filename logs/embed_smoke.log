@@ -1,0 +1,10 @@
+[smoke] 2 windows
+[smoke] ecg segments: (12, 12, 2500)
+$ extract_ecgfm.py --input /home/abrar/Desktop/AI RPM Papers/Cardiac Arrest Detection/cache/embeddings/smoke_ecg_seg.npz ...
+ECG-FM: 12 segments -> (12, 768) saved to /home/abrar/Desktop/AI RPM Papers/Cardiac Arrest Detection/cache/embeddings/smoke_ecg_emb.npy
+[smoke] ecg window embeddings: (2, 768)
+[smoke] ppg segments: (6, 1250)
+$ extract_papagei.py --input /home/abrar/Desktop/AI RPM Papers/Cardiac Arrest Detection/cache/embeddings/smoke_ppg_seg.npz ...
+PaPaGei-S: 6 segments -> (6, 512) saved to /home/abrar/Desktop/AI RPM Papers/Cardiac Arrest Detection/cache/embeddings/smoke_ppg_emb.npy
+[smoke] ppg window embeddings: (2, 512)
+[smoke] done -> smoke_window_ecgfm.npy, smoke_window_papagei.npy, smoke_meta.csv
